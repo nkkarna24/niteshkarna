@@ -1,0 +1,2403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Meta-Analysis Tool</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Carlito:ital,wght@0,400;0,700;1,400;1,700&display=swap');
+:root{
+  --bg:#f5f3ef;--bg2:#e8e4dd;--surface:#fff;--surface2:#f4f1ec;
+  --border:#ccc5bb;--border2:#b0a89c;
+  --accent:#1e40af;--acl:#dbeafe;
+  --green:#145a2e;--greenl:#d1fae5;
+  --danger:#9b1c1c;--dangerl:#fee2e2;
+  --warn:#92400e;--warnl:#fef3c7;
+  --sh:0 1px 3px rgba(0,0,0,.1),0 4px 16px rgba(0,0,0,.05);
+  --font:'Calibri','Carlito',sans-serif;
+  --mono:'Calibri','Carlito',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font);background:var(--bg);color:#000;font-size:14px;line-height:1.65}
+header{background:var(--surface);border-bottom:2px solid var(--border);padding:0 36px;display:flex;align-items:center;gap:16px;height:58px;box-shadow:var(--sh);position:sticky;top:0;z-index:200}
+.logo{font-family:var(--font);font-size:22px;font-weight:700;color:var(--accent)}
+.logo em{font-style:italic;color:#333;font-weight:400;font-size:16px}
+.badge{font-family:var(--mono);font-size:10px;padding:2px 9px;border-radius:20px;font-weight:700}
+.bg{background:var(--greenl);color:var(--green);border:1px solid #6ee7b7}
+.bb{background:var(--acl);color:var(--accent);border:1px solid #93c5fd}
+.hdr-r{margin-left:auto;font-size:11px;color:#333;font-weight:600}
+.main{max-width:1200px;margin:0 auto;padding:28px 22px 60px}
+.sec{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.sec-n{width:26px;height:26px;border-radius:50%;background:var(--accent);color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.sec-t{font-family:var(--font);font-size:15px;font-weight:700;color:#000}
+.sec-l{flex:1;height:1px;background:var(--border)}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:22px;margin-bottom:18px;box-shadow:var(--sh)}
+.dtype-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.dtype-btn{background:var(--surface2);border:2px solid var(--border);color:#000;padding:11px 13px;border-radius:8px;cursor:pointer;font-family:var(--font);font-size:13px;text-align:left;transition:all .18s;line-height:1.4;font-weight:600}
+.dtype-btn .di{font-size:18px;display:block;margin-bottom:5px}
+.dtype-btn:hover{border-color:var(--accent);background:var(--acl);color:var(--accent)}
+.dtype-btn.active{border-color:var(--accent);background:var(--acl);color:var(--accent);font-weight:700;box-shadow:0 0 0 3px rgba(30,64,175,.15)}
+.settings-grid{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;margin-top:16px;padding-top:16px;border-top:1px solid var(--border)}
+.field>label,.field-lbl{display:block;font-size:11px;font-weight:700;color:#000;text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px}
+select,input[type=text],input[type=number]{background:var(--surface2);border:2px solid var(--border);color:#000;padding:7px 10px;border-radius:7px;font-family:var(--font);font-size:13px;font-weight:600;outline:none;transition:border-color .15s,box-shadow .15s}
+select:focus,input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(30,64,175,.15)}
+select{cursor:pointer}
+.toggle-pill{display:inline-flex;background:var(--bg2);border:2px solid var(--border);border-radius:8px;overflow:hidden;margin-top:6px}
+.toggle-pill button{border:none;background:transparent;padding:7px 14px;font-family:var(--font);font-size:12px;font-weight:700;color:#333;cursor:pointer;transition:all .18s}
+.toggle-pill button.active{background:var(--accent);color:#fff}
+.check-row{display:flex;flex-wrap:wrap;gap:14px;margin-top:14px}
+.chk{display:flex;align-items:center;gap:6px;font-size:13px;color:#000;cursor:pointer;user-select:none;font-weight:600}
+.chk input[type=checkbox]{accent-color:var(--accent);width:15px;height:15px;cursor:pointer}
+.upload-zone{border:2px dashed var(--border2);border-radius:10px;padding:18px;text-align:center;cursor:pointer;transition:all .18s;background:var(--surface2);color:#000;font-size:13px;font-weight:600}
+.upload-zone:hover,.upload-zone.drag{border-color:var(--accent);background:var(--acl)}
+.excel-controls{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;margin-top:12px}
+.col-map-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:10px;margin-top:8px}
+/* Subgroup table column */
+.tbl-wrap{overflow-x:auto;border-radius:8px;border:1px solid var(--border)}
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead{background:var(--bg2)}
+th{padding:8px 10px;text-align:left;font-family:var(--mono);font-size:11px;font-weight:700;color:#000;white-space:nowrap;border-bottom:2px solid var(--border)}
+th input[type=text]{background:transparent;border:none;color:#000;font-family:var(--mono);font-size:11px;font-weight:700;width:100%;padding:0;min-width:60px;text-transform:uppercase;letter-spacing:.3px}
+th input[type=text]:focus{outline:none;color:var(--accent);background:rgba(30,64,175,.06);border-radius:3px;padding:1px 3px}
+td{padding:2px;border-bottom:1px solid var(--border);vertical-align:middle}
+tbody tr:last-child td{border-bottom:none}
+tbody tr:hover td{background:var(--surface2)}
+td input{width:100%;background:transparent;border:2px solid transparent;color:#000;padding:5px 8px;border-radius:6px;font-family:var(--mono);font-size:12px;font-weight:600}
+td input:focus{background:#fff;border-color:var(--accent);outline:none}
+.del-btn{background:none;border:none;color:#555;cursor:pointer;font-size:17px;padding:3px 7px;border-radius:6px;transition:all .15s;line-height:1}
+.del-btn:hover{color:var(--danger);background:var(--dangerl)}
+.btn-row{display:flex;gap:9px;flex-wrap:wrap;margin-top:13px}
+.btn{display:inline-flex;align-items:center;gap:7px;padding:8px 17px;border-radius:8px;border:none;cursor:pointer;font-family:var(--font);font-size:13px;font-weight:700;transition:all .18s;white-space:nowrap}
+.btn-primary{background:var(--accent);color:#fff;box-shadow:0 1px 4px rgba(30,64,175,.3)}
+.btn-primary:hover{background:#1d4f8a;transform:translateY(-1px)}
+.btn-secondary{background:var(--surface);border:2px solid var(--border);color:#000}
+.btn-secondary:hover{border-color:var(--accent);color:var(--accent);background:var(--acl)}
+.btn-danger{background:var(--surface);border:2px solid #f87171;color:var(--danger)}.btn-danger:hover{background:var(--dangerl)}
+.btn-pdf{background:#5b21b6;color:#fff}.btn-pdf:hover{background:#4c1d95}
+.btn-orange{background:#b45309;color:#fff}.btn-orange:hover{background:#92400e}
+.btn-teal{background:#0f766e;color:#fff}.btn-teal:hover{background:#0d5e57}
+.btn-sm{padding:6px 12px;font-size:12px}
+.title-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:13px;margin-bottom:18px}
+.title-field{display:flex;flex-direction:column;gap:5px}
+.title-field label{font-size:11px;font-weight:700;color:#000;text-transform:uppercase;letter-spacing:.5px}
+.title-field input{font-size:14px;font-weight:600;color:#000}
+.layout-row{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;margin-top:14px;padding-top:14px;border-top:1px solid var(--border)}
+.color-swatch{width:28px;height:28px;border-radius:6px;border:2px solid var(--border);cursor:pointer;transition:all .15s}
+.color-swatch:hover{border-color:var(--accent);transform:scale(1.12)}
+.color-swatch.active{border-color:var(--accent);box-shadow:0 0 0 3px rgba(30,64,175,.3)}
+.color-swatches{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.tabs{display:flex;gap:0;border-bottom:2px solid var(--border);margin-bottom:18px;flex-wrap:wrap}
+.tab{padding:10px 16px;cursor:pointer;font-size:13px;font-weight:700;color:#555;border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .15s}
+.tab:hover{color:#000}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+.tab-panel{display:none}.tab-panel.active{display:block}
+.plot-wrap{background:#fff;border:1px solid var(--border);border-radius:10px;padding:4px;box-shadow:var(--sh);overflow:hidden}
+.plot-wrap canvas{display:block;max-width:100%}
+.dl-row{display:flex;gap:9px;margin-top:12px;flex-wrap:wrap}
+.rtable{font-size:12px}
+.rtable th{background:var(--bg2);font-size:10.5px;padding:8px 10px;color:#000}
+.rtable td{padding:7px 10px;color:#000}
+.rtable tbody tr:hover td{background:var(--acl)}
+.mono{font-family:var(--mono);color:#000}
+.p-sig{color:var(--green);font-weight:700}.p-ns{color:#333}
+.summary-box{background:linear-gradient(135deg,#eff6ff,#f0fdf4);border:1px solid #93c5fd;border-left:4px solid var(--accent);border-radius:10px;padding:16px 20px;font-size:13.5px;line-height:2;margin-bottom:18px;color:#000}
+.summary-box strong{color:var(--accent);font-family:var(--mono);font-size:12px;font-weight:700}
+.egger-box{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:14px 18px;margin-top:14px;font-size:13px;line-height:1.8;display:none;color:#000}
+.err{background:var(--dangerl);border:2px solid #f87171;color:#7f1d1d;padding:10px 14px;border-radius:8px;font-size:13px;margin-top:10px;display:none;font-weight:700}
+/* subgroup row styling */
+.sg-header-row td{background:#dbeafe!important;font-weight:700!important;font-size:13px;color:#1e40af;border-top:2px solid #93c5fd}
+.sg-header-row td input{color:#1e40af;font-weight:700;background:transparent}
+footer{border-top:2px solid var(--border);padding:18px 36px;text-align:center;color:#000;font-size:12px;font-weight:600;margin-top:40px;background:var(--surface)}
+footer a{color:var(--accent);text-decoration:none;font-weight:700}
+@media(max-width:900px){.title-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:680px){header{padding:0 14px}.main{padding:14px}.title-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<!-- PASSWORD GATE — paste right after <body> -->
+<div id="gate" style="display:flex; align-items:center; justify-content:center;
+     position:fixed; inset:0; background:#fff; z-index:9999;">
+  <div style="text-align:center; padding:2rem; max-width:320px; width:100%;
+       border:1px solid #e0e0e0; border-radius:12px;">
+    <p style="font-size:1.1rem; font-weight:600; margin:0 0 1rem;">🔒 Protected Page</p>
+    <input id="pwd-input" type="password" placeholder="Enter password"
+           style="width:100%; padding:10px; font-size:1rem; border:1px solid #ccc;
+                  border-radius:8px; box-sizing:border-box; margin-bottom:0.75rem;"
+           onkeydown="if(event.key==='Enter') checkPwd()" />
+    <button onclick="checkPwd()"
+            style="width:100%; padding:10px; font-size:1rem; background:#1a1a1a;
+                   color:#fff; border:none; border-radius:8px; cursor:pointer;">
+      Unlock
+    </button>
+    <p id="pwd-err" style="color:red; font-size:0.85rem; margin:0.5rem 0 0;
+                            min-height:1.2em;"></p>
+  </div>
+</div>
+
+<script>
+  (function () {
+    var PASSWORD = "mymeta"; // <-- change this
+    var SESSION_KEY = "page_unlocked";
+
+    if (sessionStorage.getItem(SESSION_KEY) === "yes") {
+      document.getElementById("gate").style.display = "none";
+    }
+
+    window.checkPwd = function () {
+      var input = document.getElementById("pwd-input").value;
+      if (input === PASSWORD) {
+        sessionStorage.setItem(SESSION_KEY, "yes");
+        document.getElementById("gate").style.display = "none";
+      } else {
+        document.getElementById("pwd-err").textContent = "Incorrect password. Try again.";
+        document.getElementById("pwd-input").value = "";
+        document.getElementById("pwd-input").focus();
+      }
+    };
+  })();
+</script>
+<!-- END PASSWORD GATE -->
+  
+<header>
+  <div class="logo">Meta<em>analysis</em></div>
+  <div class="badge bg">KARNA EDITION</div>
+  <div class="badge bb">v6.0</div>
+  <div class="hdr-r" style="display:flex;align-items:center;gap:10px">
+    <button class="btn btn-secondary btn-sm" onclick="saveSession()" style="font-size:11px;padding:4px 10px">💾 Save Session</button>
+    <button class="btn btn-secondary btn-sm" onclick="document.getElementById('loadFileHdr').click()" style="font-size:11px;padding:4px 10px">📂 Load Session</button>
+    <input type="file" id="loadFileHdr" accept=".json" style="display:none" onchange="loadSession(this)">
+    <span style="font-size:11px;color:#333;font-weight:600">OFFLINE MACHINE</span>
+  </div>
+</header>
+<div class="main">
+
+<!-- STEP 1 -->
+<div class="card">
+  <div class="sec"><div class="sec-n">1</div><div class="sec-t">Select data type</div><div class="sec-l"></div></div>
+  <div class="dtype-grid" id="dtypeGrid">
+    <button class="dtype-btn active" data-type="hr" onclick="selectDataType(this)"><span class="di">📊</span>HR / OR / RR<br><small style="font-size:11px;font-weight:600;color:#333">+ 95% CI or SE</small></button>
+    <button class="dtype-btn" data-type="events" onclick="selectDataType(this)"><span class="di">🔢</span>Events / Total<br><small style="font-size:11px;font-weight:600;color:#333">two groups</small></button>
+    <button class="dtype-btn" data-type="mean2" onclick="selectDataType(this)"><span class="di">📐</span>Mean ± SD<br><small style="font-size:11px;font-weight:600;color:#333">two groups</small></button>
+    <button class="dtype-btn" data-type="mean1" onclick="selectDataType(this)"><span class="di">📏</span>Mean ± SD<br><small style="font-size:11px;font-weight:600;color:#333">one group</small></button>
+    <button class="dtype-btn" data-type="prop" onclick="selectDataType(this)"><span class="di">%</span>Proportion<br><small style="font-size:11px;font-weight:600;color:#333">events / total</small></button>
+    <button class="dtype-btn" data-type="md_se" onclick="selectDataType(this)"><span class="di">Δ</span>MD + SE<br><small style="font-size:11px;font-weight:600;color:#333">mean diff + SE</small></button>
+    <button class="dtype-btn" data-type="smd_se" onclick="selectDataType(this)"><span class="di">d</span>SMD + SE<br><small style="font-size:11px;font-weight:600;color:#333">std mean diff + SE</small></button>
+  </div>
+  <div id="logToggleDiv" style="margin-top:14px;padding:12px 16px;background:#fffbeb;border:1px solid #fcd34d;border-radius:8px;display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+    <span style="font-size:13px;font-weight:700;color:#000">Input data format for HR / OR / RR:</span>
+    <div class="toggle-pill">
+      <button id="btnOriginal" class="active" onclick="setLogMode(false)">Original scale (e.g. HR = 1.45)</button>
+      <button id="btnLog" onclick="setLogMode(true)">Log scale (e.g. ln(HR) = 0.37)</button>
+    </div>
+    <span id="logModeLabel" style="font-size:12px;font-weight:700;color:var(--accent)">→ Values will be log-transformed automatically</span>
+  </div>
+  <div class="settings-grid">
+    <div class="field"><label>Model</label><select id="modelSelect"><option value="random">Random Effects</option><option value="fixed">Fixed Effect</option></select></div>
+    <div class="field" id="methodDiv"><label>τ² Estimator</label><select id="methodSelect"><option value="dl">DerSimonian-Laird</option><option value="reml">REML</option><option value="pm">Paule-Mandel</option></select></div>
+    <div class="field" id="measureDiv"><label>Summary measure</label><select id="measureSelect"><option value="RR">RR</option><option value="OR">OR</option><option value="HR">HR</option></select></div>
+  </div>
+  <div class="check-row">
+    <label class="chk"><input type="checkbox" id="chkKnapp"> Knapp-Hartung adj.</label>
+    <label class="chk"><input type="checkbox" id="chkContCorr" checked> Continuity correction</label>
+    <label class="chk"><input type="checkbox" id="chk3dp" checked> Three decimal places</label>
+    <label class="chk"><input type="checkbox" id="chkPredInt" checked> Prediction interval</label>
+    <label class="chk"><input type="checkbox" id="chkHetero" checked> Heterogeneity stats</label>
+    <label class="chk"><input type="checkbox" id="chkOverall" checked> Overall effect</label>
+    <label class="chk"><input type="checkbox" id="chkSubgroup"> Subgroup analysis</label>
+  </div>
+</div>
+
+<!-- STEP 2: Excel -->
+<div class="card">
+  <div class="sec"><div class="sec-n">2</div><div class="sec-t">Import from Excel (optional)</div><div class="sec-l"></div></div>
+  <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()" ondrop="handleDrop(event)" ondragover="handleDragOver(event)" ondragleave="handleDragLeave()">
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:block;margin:0 auto 7px"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><polyline points="9 15 12 12 15 15"/></svg>
+    <strong>Click to upload</strong> or drag &amp; drop (.xlsx, .xls, .csv) — data stays on your device
+  </div>
+  <input type="file" id="fileInput" accept=".xlsx,.xls,.csv" style="display:none" onchange="handleFile(this)">
+  <div id="excelControls" style="display:none" class="excel-controls">
+    <div class="field"><label>Sheet</label><select id="sheetSelect" onchange="loadSheet()"></select></div>
+    <button class="btn btn-danger btn-sm" onclick="clearExcel()">✕ Remove file</button>
+  </div>
+  <div id="colMapper" style="display:none;margin-top:14px">
+    <div style="font-size:11px;font-weight:700;color:#000;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Map columns to variables</div>
+    <div class="col-map-grid" id="colMapGrid"></div>
+    <div class="btn-row"><button class="btn btn-primary btn-sm" onclick="importFromExcel()">↓ Import into study table</button></div>
+  </div>
+  <div id="previewWrap" style="margin-top:12px;display:none">
+    <div style="font-size:11px;font-weight:700;color:#000;margin-bottom:6px;font-family:var(--mono)">PREVIEW (first 5 rows)</div>
+    <div class="tbl-wrap" style="max-height:150px;overflow-y:auto"><table id="previewTable"></table></div>
+  </div>
+</div>
+
+<!-- STEP 3: Study Data -->
+<div class="card">
+  <div class="sec"><div class="sec-n">3</div><div class="sec-t">Study data <span style="font-size:12px;font-weight:600;color:#555;font-family:var(--mono)">(click column headers to rename)</span></div><div class="sec-l"></div></div>
+  <div class="tbl-wrap"><table id="studyTable"><thead id="studyThead"></thead><tbody id="studyTbody"></tbody></table></div>
+  <div class="err" id="errorMsg"></div>
+  <div class="btn-row">
+    <button class="btn btn-secondary btn-sm" onclick="addRow()">＋ Add study</button>
+    <button class="btn btn-teal btn-sm" onclick="addSubgroupHeader()">＋ Add subgroup header</button>
+    <button class="btn btn-secondary btn-sm" onclick="loadDemo()">Load demo data</button>
+    <button class="btn btn-danger btn-sm" onclick="clearTable()">Clear table</button>
+  </div>
+</div>
+
+<!-- STEP 4: Plots -->
+<div class="card">
+  <div class="sec"><div class="sec-n">4</div><div class="sec-t">Plot titles, layout &amp; visual options</div><div class="sec-l"></div></div>
+  <div class="title-grid">
+    <div class="title-field"><label>Forest Plot Title</label><input type="text" id="forestTitle" value="Forest Plot"></div>
+    <div class="title-field"><label>Funnel Plot Title</label><input type="text" id="funnelTitle" value="Funnel Plot"></div>
+    <div class="title-field"><label>Leave-One-Out Plot Title</label><input type="text" id="looTitle" value="Leave-One-Out Sensitivity Analysis"></div>
+    <div class="title-field"><label>Results / Report Title</label><input type="text" id="resultsTitle" value="Meta-Analysis Results"></div>
+    <div class="title-field"><label>Subtitle / Footnote</label><input type="text" id="forestSubtitle" placeholder="Squares = study weight, Diamond = pooled estimate"></div>
+    <div class="title-field"><label>X-axis label</label><input type="text" id="xAxisLabel" placeholder="Leave blank for auto"></div>
+  </div>
+  <div class="layout-row">
+    <div class="field"><label>Forest plot layout</label>
+      <select id="layoutSelect" onchange="layoutName=this.value">
+        <option value="revman">Cochrane RevMan</option>
+        <option value="bw">Black &amp; White</option>
+        <option value="jama">JAMA</option>
+        <option value="stata">Stata</option>
+        <option value="lancet">Lancet</option>
+        <option value="bmj">BMJ</option>
+      </select>
+    </div>
+    <div>
+      <div class="field-lbl">Study square color</div>
+      <div class="color-swatches" id="squareColors">
+        <div class="color-swatch active" style="background:#1e40af" data-color="#1e40af" onclick="setColor('sq',this)"></div>
+        <div class="color-swatch" style="background:#166534" data-color="#166534" onclick="setColor('sq',this)"></div>
+        <div class="color-swatch" style="background:#7c3aed" data-color="#7c3aed" onclick="setColor('sq',this)"></div>
+        <div class="color-swatch" style="background:#b91c1c" data-color="#b91c1c" onclick="setColor('sq',this)"></div>
+        <div class="color-swatch" style="background:#c2410c" data-color="#c2410c" onclick="setColor('sq',this)"></div>
+        <div class="color-swatch" style="background:#374151" data-color="#374151" onclick="setColor('sq',this)"></div>
+        <div class="color-swatch" style="background:#000" data-color="#000000" onclick="setColor('sq',this)"></div>
+        <input type="color" id="sqCustom" value="#1e40af" style="width:28px;height:28px;border-radius:6px;border:2px solid var(--border);cursor:pointer;padding:1px" onchange="setColorCustom('sq',this)">
+      </div>
+    </div>
+    <div>
+      <div class="field-lbl">Diamond color</div>
+      <div class="color-swatches" id="diamondColors">
+        <div class="color-swatch active" style="background:#166534" data-color="#166534" onclick="setColor('di',this)"></div>
+        <div class="color-swatch" style="background:#1e40af" data-color="#1e40af" onclick="setColor('di',this)"></div>
+        <div class="color-swatch" style="background:#7c3aed" data-color="#7c3aed" onclick="setColor('di',this)"></div>
+        <div class="color-swatch" style="background:#b91c1c" data-color="#b91c1c" onclick="setColor('di',this)"></div>
+        <div class="color-swatch" style="background:#c2410c" data-color="#c2410c" onclick="setColor('di',this)"></div>
+        <div class="color-swatch" style="background:#374151" data-color="#374151" onclick="setColor('di',this)"></div>
+        <div class="color-swatch" style="background:#000" data-color="#000000" onclick="setColor('di',this)"></div>
+        <input type="color" id="diCustom" value="#166534" style="width:28px;height:28px;border-radius:6px;border:2px solid var(--border);cursor:pointer;padding:1px" onchange="setColorCustom('di',this)">
+      </div>
+    </div>
+    <div>
+      <div class="field-lbl">Square size scale</div>
+      <div style="display:flex;align-items:center;gap:8px;margin-top:4px">
+        <span style="font-size:11px;font-weight:700">Sm</span>
+        <input type="range" id="sqSizeScale" min="20" max="100" value="52" step="4" style="width:100px;accent-color:var(--accent)">
+        <span style="font-size:11px;font-weight:700">Lg</span>
+        <span id="sqSizeVal" style="font-size:11px;font-weight:700;color:var(--accent);min-width:28px">52</span>
+      </div>
+    </div>
+    <div>
+      <div class="field-lbl">PNG export quality</div>
+      <select id="pngScale" style="width:130px">
+        <option value="2">Standard (2×)</option>
+        <option value="4">High (4×)</option>
+        <option value="6">Ultra (6×)</option>
+        <option value="8" selected>Maximum (8×)</option>
+      </select>
+    </div>
+  </div>
+  <div class="btn-row" style="margin-top:18px">
+    <button class="btn btn-primary" onclick="runAnalysis('forest')">▶ Forest Plot</button>
+    <button class="btn btn-secondary" onclick="runAnalysis('funnel')">▶ Funnel Plot</button>
+    <button class="btn btn-secondary" onclick="runAnalysis('results')">▶ Results Table</button>
+    <button class="btn btn-orange btn-sm" onclick="runLOO()">🔁 Leave-One-Out</button>
+    <button class="btn btn-secondary btn-sm" onclick="runEgger()">📈 Egger's Test</button>
+    <button class="btn btn-teal btn-sm" onclick="runTrimFill()">✂ Trim &amp; Fill</button>
+    <button class="btn btn-danger btn-sm" onclick="resetAll()">↺ Reset</button>
+  </div>
+  <div class="egger-box" id="eggerBox"></div>
+</div>
+
+<!-- RESULTS -->
+<div id="resultsArea" style="display:none">
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab('forest')">🌲 Forest Plot</div>
+    <div class="tab" onclick="switchTab('funnel')">🔻 Funnel Plot</div>
+    <div class="tab" onclick="switchTab('results')">📋 Results Table</div>
+    <div class="tab" onclick="switchTab('loo')">🔁 Sensitivity (LOO)</div>
+    <div class="tab" onclick="switchTab('subgroup')">📦 Subgroup</div>
+    <div class="tab" onclick="switchTab('trimfill')">✂ Trim &amp; Fill</div>
+  </div>
+  <div class="tab-panel active" id="tab-forest">
+    <div class="plot-wrap"><canvas id="forestCanvas"></canvas></div>
+    <div class="dl-row">
+      <button class="btn btn-secondary btn-sm" onclick="downloadPNG('forestCanvas',titleToFilename('forestTitle','forest_plot')+'.png')">⬇ PNG</button>
+      <button class="btn btn-pdf btn-sm" onclick="exportPDF('forest')">⬇ PDF (selectable text)</button>
+    </div>
+  </div>
+  <div class="tab-panel" id="tab-funnel">
+    <div class="plot-wrap"><canvas id="funnelCanvas"></canvas></div>
+    <div class="dl-row">
+      <button class="btn btn-secondary btn-sm" onclick="downloadPNG('funnelCanvas',titleToFilename('funnelTitle','funnel_plot')+'.png')">⬇ PNG</button>
+      <button class="btn btn-pdf btn-sm" onclick="exportPDF('funnel')">⬇ PDF (selectable text)</button>
+    </div>
+  </div>
+  <div class="tab-panel" id="tab-results">
+    <div class="summary-box" id="summaryBox"></div>
+    <div class="tbl-wrap"><table class="rtable" id="resultsTable"><thead></thead><tbody></tbody></table></div>
+    <div class="dl-row">
+      <button class="btn btn-pdf btn-sm" onclick="exportPDF('results')">⬇ Results PDF</button>
+      <button class="btn btn-secondary btn-sm" onclick="saveSession()">💾 Save Session</button>
+      <button class="btn btn-secondary btn-sm" onclick="document.getElementById('loadFileResults').click()">📂 Load Session</button>
+      <input type="file" id="loadFileResults" accept=".json" style="display:none" onchange="loadSession(this)">
+    </div>
+  </div>
+  <div class="tab-panel" id="tab-loo">
+    <div class="summary-box" id="looSummary" style="display:none"></div>
+    <div class="plot-wrap" style="margin-bottom:12px"><canvas id="looCanvas"></canvas></div>
+    <div class="tbl-wrap"><table class="rtable" id="looTable"><thead></thead><tbody></tbody></table></div>
+    <div class="dl-row">
+      <button class="btn btn-secondary btn-sm" onclick="downloadPNG('looCanvas',titleToFilename('looTitle','loo_sensitivity')+'.png')">⬇ LOO Plot PNG</button>
+      <button class="btn btn-pdf btn-sm" onclick="exportPDF('loo')">⬇ LOO PDF</button>
+    </div>
+  </div>
+  <div class="tab-panel" id="tab-subgroup">
+    <div id="subgroupContent"><div style="padding:24px;color:#555;font-weight:600;text-align:center">Run Forest Plot with subgroup analysis enabled (check "Subgroup analysis" and add subgroup headers)</div></div>
+  </div>
+  <div class="tab-panel" id="tab-trimfill">
+    <div class="summary-box" id="trimfillSummary" style="display:none"></div>
+    <div class="plot-wrap" style="margin-bottom:12px"><canvas id="trimfillCanvas"></canvas></div>
+    <div class="tbl-wrap" style="margin-bottom:12px"><table class="rtable" id="trimfillTable"><thead></thead><tbody></tbody></table></div>
+    <div class="dl-row">
+      <button class="btn btn-secondary btn-sm" onclick="downloadPNG('trimfillCanvas',titleToFilename('funnelTitle','trimfill_plot')+'.png')">⬇ PNG</button>
+      <button class="btn btn-pdf btn-sm" onclick="exportPDF('trimfill')">⬇ PDF</button>
+    </div>
+  </div>
+</div>
+</div>
+<footer>Meta-Analysis Offline Tool · All calculations local · No data transmitted · Prepared by <a href="https://niteshkarna.com.np/" target="_blank">Nitesh Kumar Karna</a></footer>
+<script>
+
+// ================================================================
+//  STATE
+// ================================================================
+let dataType='hr', studies=[], lastResult=null, workbook=null, sheetData=[];
+let colHeaders=[], rowIsSubgroup=[];
+let sqColor='#1e40af', diColor='#166534';
+let layoutName='revman';
+let inputIsLog=false;
+let sqSizeScale=52;
+
+const CF='Calibri,Carlito,sans-serif';
+const CM='Calibri,Carlito,sans-serif';
+
+const DEFAULT_COLS={
+  hr:    ['Study','HR/OR/RR','SE','Lower CI','Upper CI'],
+  events:['Study','Events (T)','Total (T)','Events (C)','Total (C)'],
+  mean2: ['Study','Mean (T)','SD (T)','N (T)','Mean (C)','SD (C)','N (C)'],
+  mean1: ['Study','Mean','SD','N'],
+  prop:  ['Study','Events','Total'],
+  md_se: ['Study','MD','SE'],
+  smd_se:['Study','SMD','SE'],
+};
+const DEMO={
+  hr:[['ATLAS ACS 2','1.50','0.19','0.70','1.50'],['RE-LY','0.90','0.14','0.76','1.14'],['ROCKET-AF','1.20','0.21','0.78','1.60'],['ARISTOTLE','0.75','0.17','0.60','1.02'],['ENGAGE AF','1.70','0.25','0.90','2.10']],
+  events:[['Study A','15','100','25','100'],['Study B','20','120','38','120'],['Study C','8','80','14','80'],['Study D','30','200','55','200'],['Study E','12','90','22','90']],
+  mean2:[['Study A','12.5','3.1','50','10.2','3.4','50'],['Study B','14.1','2.8','60','11.5','3.0','60'],['Study C','11.8','3.5','45','10.9','3.2','45'],['Study D','13.2','2.9','55','10.5','3.1','55']],
+  mean1:[['Study A','5.2','1.1','30'],['Study B','4.8','0.9','45'],['Study C','6.1','1.4','28'],['Study D','5.5','1.2','35']],
+  prop:[['Study A','12','100'],['Study B','25','200'],['Study C','8','80'],['Study D','19','150'],['Study E','30','250']],
+  md_se:[['Study A','2.5','0.8'],['Study B','-1.2','1.1'],['Study C','3.7','0.9'],['Study D','1.8','1.3'],['Study E','2.1','0.7']],
+  smd_se:[['Study A','0.55','0.18'],['Study B','0.32','0.22'],['Study C','0.78','0.20'],['Study D','0.41','0.25'],['Study E','0.63','0.16']],
+};
+
+// Size slider
+document.getElementById('sqSizeScale').addEventListener('input',function(){
+  sqSizeScale=parseInt(this.value);
+  document.getElementById('sqSizeVal').textContent=this.value;
+});
+
+// ================================================================
+//  LOG MODE
+// ================================================================
+function setLogMode(isLog){
+  inputIsLog=isLog;
+  document.getElementById('btnLog').classList.toggle('active',isLog);
+  document.getElementById('btnOriginal').classList.toggle('active',!isLog);
+  const lbl=document.getElementById('logModeLabel');
+  lbl.textContent=isLog?'→ Values used as-is (already in log scale)':'→ Values will be log-transformed automatically';
+  lbl.style.color=isLog?'#7c3aed':'var(--accent)';
+}
+
+// ================================================================
+//  UI INIT
+// ================================================================
+function selectDataType(btn){
+  document.querySelectorAll('.dtype-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active'); dataType=btn.dataset.type;
+  colHeaders=[...DEFAULT_COLS[dataType]];
+  updateUI(); buildTable(); resetResults();
+}
+function updateUI(){
+  const isR=dataType==='hr'||dataType==='events';
+  document.getElementById('measureDiv').style.display=isR?'':'none';
+  document.getElementById('logToggleDiv').style.display=dataType==='hr'?'flex':'none';
+  rebuildColMapper();
+}
+function setColor(t,el){
+  const g=t==='sq'?'squareColors':'diamondColors';
+  document.querySelectorAll('#'+g+' .color-swatch').forEach(s=>s.classList.remove('active'));
+  el.classList.add('active');
+  if(t==='sq'){sqColor=el.dataset.color;document.getElementById('sqCustom').value=el.dataset.color;}
+  else{diColor=el.dataset.color;document.getElementById('diCustom').value=el.dataset.color;}
+}
+function setColorCustom(t,inp){
+  const g=t==='sq'?'squareColors':'diamondColors';
+  document.querySelectorAll('#'+g+' .color-swatch').forEach(s=>s.classList.remove('active'));
+  if(t==='sq') sqColor=inp.value; else diColor=inp.value;
+}
+
+// ================================================================
+//  TABLE
+// ================================================================
+function buildTable(){
+  renderTableHeader();
+  document.getElementById('studyTbody').innerHTML='';
+  studies=[]; rowIsSubgroup=[];
+  for(let i=0;i<5;i++) addRow();
+}
+function renderTableHeader(){
+  const isSubgroup=document.getElementById('chkSubgroup').checked;
+  const extraCol=isSubgroup?'<th><input type="text" value="Subgroup" title="Subgroup column"></th>':'';
+  document.getElementById('studyThead').innerHTML='<tr>'+
+    colHeaders.map((h,i)=>'<th><input type="text" value="'+h+'" onchange="colHeaders['+i+']=this.value" onfocus="this.select()"></th>').join('')+
+    extraCol+'<th style="width:34px"></th></tr>';
+}
+function addRow(vals,isSG){
+  const idx=studies.length;
+  const isSubgroup=document.getElementById('chkSubgroup').checked;
+  const numCols=colHeaders.length+(isSubgroup?1:0);
+  const row=vals?[...vals]:colHeaders.map((_,ci)=>ci===0?'Study '+String.fromCharCode(65+idx):'');
+  if(isSubgroup&&!vals) row.push('');
+  studies.push(row);
+  rowIsSubgroup.push(!!isSG);
+  const tr=document.createElement('tr');
+  tr.dataset.idx=idx;
+  if(isSG) tr.classList.add('sg-header-row');
+  const displayCols=isSG?1:row.length;
+  for(let ci=0;ci<row.length;ci++){
+    const td=document.createElement('td');
+    if(isSG&&ci>0){td.style.background='#dbeafe';tr.appendChild(td);continue;}
+    const inp=document.createElement('input'); inp.type='text'; inp.value=row[ci]||'';
+    if(isSG&&ci===0){inp.style.fontWeight='700';inp.style.color='#1e40af';inp.placeholder='Subgroup name…';}
+    inp.oninput=e=>{studies[idx][ci]=e.target.value;};
+    if(isSG&&ci===0){inp.style.fontWeight='700';}
+    td.appendChild(inp); tr.appendChild(td);
+  }
+  const dtd=document.createElement('td');
+  const db=document.createElement('button'); db.className='del-btn'; db.textContent='×';
+  db.onclick=()=>{studies[idx]=null;rowIsSubgroup[idx]=false;tr.remove();};
+  dtd.appendChild(db); tr.appendChild(dtd);
+  document.getElementById('studyTbody').appendChild(tr);
+}
+function addSubgroupHeader(){
+  document.getElementById('chkSubgroup').checked=true;
+  renderTableHeader();
+  const idx=studies.length;
+  studies.push(['New Subgroup']);
+  rowIsSubgroup.push(true);
+  const tr=document.createElement('tr'); tr.dataset.idx=idx; tr.classList.add('sg-header-row');
+  const numCols=colHeaders.length+(document.getElementById('chkSubgroup').checked?1:0);
+  for(let ci=0;ci<numCols;ci++){
+    const td=document.createElement('td');
+    td.style.background='#dbeafe';
+    if(ci===0){
+      const inp=document.createElement('input'); inp.type='text'; inp.value='New Subgroup';
+      inp.style.fontWeight='700'; inp.style.color='#1e40af'; inp.placeholder='Subgroup name…';
+      inp.oninput=e=>{studies[idx][0]=e.target.value;};
+      td.appendChild(inp);
+    }
+    tr.appendChild(td);
+  }
+  const dtd=document.createElement('td');
+  const db=document.createElement('button'); db.className='del-btn'; db.textContent='×';
+  db.onclick=()=>{studies[idx]=null;rowIsSubgroup[idx]=false;tr.remove();};
+  dtd.appendChild(db); tr.appendChild(dtd);
+  document.getElementById('studyTbody').appendChild(tr);
+}
+function loadDemo(){
+  studies=[]; rowIsSubgroup=[]; document.getElementById('studyTbody').innerHTML='';
+  DEMO[dataType].forEach(r=>addRow(r)); syncInputs();
+}
+function syncInputs(){
+  document.querySelectorAll('#studyTbody tr').forEach(tr=>{
+    const idx=parseInt(tr.dataset.idx); if(!studies[idx])return;
+    tr.querySelectorAll('input').forEach((inp,ci)=>{inp.value=studies[idx][ci]||'';});
+  });
+}
+function clearTable(){studies=[];rowIsSubgroup=[];document.getElementById('studyTbody').innerHTML='';for(let i=0;i<5;i++)addRow();resetResults();}
+function resetResults(){document.getElementById('resultsArea').style.display='none';document.getElementById('errorMsg').style.display='none';document.getElementById('eggerBox').style.display='none';}
+function resetAll(){clearTable();resetResults();}
+function showErr(m){const el=document.getElementById('errorMsg');el.textContent=m;el.style.display='block';}
+function hideErr(){document.getElementById('errorMsg').style.display='none';}
+
+// ================================================================
+//  EXCEL
+// ================================================================
+function handleDragOver(e){e.preventDefault();document.getElementById('uploadZone').classList.add('drag');}
+function handleDragLeave(){document.getElementById('uploadZone').classList.remove('drag');}
+function handleDrop(e){e.preventDefault();handleDragLeave();const f=e.dataTransfer.files[0];if(f)processFile(f);}
+function handleFile(inp){if(inp.files[0])processFile(inp.files[0]);}
+function processFile(file){
+  const rd=new FileReader();
+  rd.onload=e=>{
+    workbook=XLSX.read(e.target.result,{type:'array'});
+    const sel=document.getElementById('sheetSelect'); sel.innerHTML='';
+    workbook.SheetNames.forEach(n=>{const o=document.createElement('option');o.value=n;o.textContent=n;sel.appendChild(o);});
+    document.getElementById('excelControls').style.display='flex'; loadSheet();
+  };
+  rd.readAsArrayBuffer(file);
+}
+function loadSheet(){
+  const ws=workbook.Sheets[document.getElementById('sheetSelect').value];
+  sheetData=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+  renderPreview(); rebuildColMapper();
+}
+function renderPreview(){
+  const rows=sheetData.slice(0,6); const tbl=document.getElementById('previewTable'); tbl.innerHTML='';
+  rows.forEach((row,ri)=>{
+    const tr=document.createElement('tr');
+    row.slice(0,10).forEach(cell=>{
+      const el=document.createElement(ri===0?'th':'td');
+      el.textContent=cell; el.style.cssText='padding:4px 9px;border-bottom:1px solid #ccc;font-size:11px;white-space:nowrap;color:#000;font-weight:'+(ri===0?'700':'600');
+      tr.appendChild(el);
+    });
+    tbl.appendChild(tr);
+  });
+  document.getElementById('previewWrap').style.display='block';
+}
+function rebuildColMapper(){
+  if(!sheetData.length){document.getElementById('colMapper').style.display='none';return;}
+  const headers=sheetData[0]||[];
+  const opts='<option value="">-- skip --</option>'+headers.map((h,i)=>'<option value="'+i+'">'+(h||'Col '+(i+1))+'</option>').join('');
+  document.getElementById('colMapGrid').innerHTML=colHeaders.map((c,i)=>'<div class="field"><label>'+c+'</label><select id="cmap_'+i+'">'+opts+'</select></div>').join('');
+  colHeaders.forEach((c,i)=>{
+    const sel=document.getElementById('cmap_'+i); const lo=c.toLowerCase();
+    headers.forEach((h,j)=>{if(String(h).toLowerCase().includes(lo.split(' ')[0]))sel.value=j;});
+  });
+  document.getElementById('colMapper').style.display='block';
+}
+function importFromExcel(){
+  const maps=colHeaders.map((_,i)=>{const v=document.getElementById('cmap_'+i).value;return v===''?null:parseInt(v);});
+  const rows=sheetData.slice(1).filter(r=>r.some(c=>c!==''));
+  studies=[]; rowIsSubgroup=[]; document.getElementById('studyTbody').innerHTML='';
+  rows.forEach(row=>{addRow(maps.map(m=>m===null?'':String(row[m]||'')));});
+  syncInputs();
+}
+function clearExcel(){
+  workbook=null;sheetData=[];
+  ['excelControls','colMapper','previewWrap'].forEach(id=>document.getElementById(id).style.display='none');
+  document.getElementById('fileInput').value='';
+}
+
+// ================================================================
+//  MATH
+// ================================================================
+function jsnorm(z){
+  const a=[0.254829592,-0.284496736,1.421413741,-1.453152027,1.061405429],p=0.3275911;
+  const sg=z<0?-1:1,x=Math.abs(z)/Math.sqrt(2),t=1/(1+p*x);
+  return 0.5*(1+sg*(1-t*(a[0]+t*(a[1]+t*(a[2]+t*(a[3]+t*a[4]))))*Math.exp(-x*x)));
+}
+function lgamma(x){const c=[76.18009172947146,-86.50532032941677,24.01409824083091,-1.231739572450155,1.208650973866179e-3,-5.395239384953e-6];let y=x,tmp=x+5.5;tmp-=(x+0.5)*Math.log(tmp);let s=1.000000000190015;for(let j=0;j<6;j++){y++;s+=c[j]/y;}return -tmp+Math.log(2.5066282746310005*s/x);}
+function gammaInc(a,x){if(x<=0)return 0;if(x<a+1){let s=1/a,t=1/a;for(let n=1;n<200;n++){t*=x/(a+n);s+=t;if(Math.abs(t)<1e-10)break;}return s*Math.exp(-x+a*Math.log(x)-lgamma(a));}let fp=1e-300,b=x+1-a,c=1/fp,d=1/b,h=d;for(let n=1;n<=200;n++){const an=-n*(n-a);b+=2;d=an*d+b;if(Math.abs(d)<fp)d=fp;c=b+an/c;if(Math.abs(c)<fp)c=fp;d=1/d;const dt=d*c;h*=dt;if(Math.abs(dt-1)<1e-10)break;}return 1-Math.exp(-x+a*Math.log(x)-lgamma(a))*h;}
+function chiPval(Q,df){return Q<=0?1:(1-gammaInc(df/2,Q/2));}
+function getTcrit(df){const t=[12.706,4.303,3.182,2.776,2.571,2.447,2.365,2.306,2.262,2.228,2.201,2.179,2.160,2.145,2.131,2.120,2.110,2.101,2.093,2.086,2.080,2.074,2.069,2.064,2.060,2.056,2.052,2.048,2.045,2.042];return df>=30?1.96:t[Math.min(df-1,29)];}
+function tCDF(t,df){
+  // Returns P(T <= t) for Student's t-distribution
+  // Uses the relationship: two-tailed p = I_x(df/2, 0.5) where x = df/(df+t^2)
+  if(df<=0||!isFinite(df))return 0.5;
+  if(!isFinite(t))return t>0?1:0;
+  if(t===0)return 0.5;
+  const x=df/(df+t*t);
+  // P-value (two-tailed) = betaInc(x, df/2, 0.5)
+  // CDF = 1 - p/2 for t > 0
+  const ib=betaInc(x,df/2,0.5);
+  return t>=0 ? 1-0.5*ib : 0.5*ib;
+}
+
+// Two-tailed p-value from t-statistic directly (more reliable)
+function twoTailPfromT(t,df){
+  if(df<=0||!isFinite(df))return 1;
+  if(!isFinite(t)||isNaN(t))return 1;
+  if(t===0)return 1;
+  const x=df/(df+t*t);
+  const p=betaInc(x,df/2,0.5);
+  return Math.min(1,Math.max(0,p));
+}
+
+function betaInc(x,a,b){
+  // Regularized incomplete beta function I_x(a,b)
+  // Uses continued fraction via Lentz method (Numerical Recipes §6.4)
+  if(x<=0)return 0;
+  if(x>=1)return 1;
+  // Use symmetry relation for better convergence when x > (a+1)/(a+b+2)
+  if(x>(a+1)/(a+b+2)) return 1-betaInc(1-x,b,a);
+  const lbeta=lgamma(a)+lgamma(b)-lgamma(a+b);
+  const front=Math.exp(a*Math.log(x)+b*Math.log(1-x)-lbeta)/a;
+  // Lentz continued fraction
+  const TINY=1e-300,MAXIT=200,EPS=3e-7;
+  let c=1,d=1-(a+b)*x/(a+1);
+  if(Math.abs(d)<TINY)d=TINY;
+  d=1/d;
+  let h=d;
+  for(let m=1;m<=MAXIT;m++){
+    // Even step
+    let num=m*(b-m)*x/((a+2*m-1)*(a+2*m));
+    d=1+num*d; if(Math.abs(d)<TINY)d=TINY; d=1/d;
+    c=1+num/c; if(Math.abs(c)<TINY)c=TINY;
+    h*=d*c;
+    // Odd step
+    num=-(a+m)*(a+b+m)*x/((a+2*m)*(a+2*m+1));
+    d=1+num*d; if(Math.abs(d)<TINY)d=TINY; d=1/d;
+    c=1+num/c; if(Math.abs(c)<TINY)c=TINY;
+    const delta=d*c;
+    h*=delta;
+    if(Math.abs(delta-1)<EPS)break;
+  }
+  return front*h;
+}
+
+function getStudyData(){return studies.filter((s,i)=>s&&!rowIsSubgroup[i]&&s[0]&&s[0].trim());}
+function getSubgroupMap(){
+  // returns {studyIdx: groupName} mapping
+  const map={};let curGroup='Overall';
+  studies.forEach((s,i)=>{
+    if(!s)return;
+    if(rowIsSubgroup[i]){curGroup=s[0]||'Group';}
+    else if(s[0]&&s[0].trim()) map[i]=curGroup;
+  });
+  return map;
+}
+
+function computeLogEffect(s){
+  const name=s[0].trim();
+  try{
+    if(dataType==='hr'){
+      let val=parseFloat(String(s[1]).replace(/[–−]/g,'-')),se=parseFloat(s[2]);
+      let logES;
+      if(inputIsLog){
+        logES=val;
+        if(isNaN(se)||se<=0){const lo=parseFloat(s[3]),hi=parseFloat(s[4]);if(isNaN(lo)||isNaN(hi))return null;logES=(lo+hi)/2;se=(hi-lo)/(2*1.96);}
+      } else {
+        if(isNaN(val)||val<=0)return null;
+        logES=Math.log(val);
+        if(isNaN(se)||se<=0){const lo=parseFloat(s[3]),hi=parseFloat(s[4]);if(isNaN(lo)||isNaN(hi)||lo<=0||hi<=0)return null;logES=(Math.log(lo)+Math.log(hi))/2;se=(Math.log(hi)-Math.log(lo))/(2*1.96);}
+      }
+      if(isNaN(logES)||isNaN(se)||se<=0)return null;
+      return{name,logES,se};
+    }
+    if(dataType==='events'){
+      let eT=+s[1],nT=+s[2],eC=+s[3],nC=+s[4];
+      if(document.getElementById('chkContCorr').checked){eT+=0.5;eC+=0.5;nT+=1;nC+=1;}
+      if(eT<=0||eC<=0||eT>=nT||eC>=nC)return null;
+      const m=document.getElementById('measureSelect').value;
+      let logES,se;
+      if(m==='OR'){logES=Math.log((eT*(nC-eC))/(eC*(nT-eT)));se=Math.sqrt(1/eT+1/(nT-eT)+1/eC+1/(nC-eC));}
+      else{logES=Math.log((eT/nT)/(eC/nC));se=Math.sqrt((nT-eT)/(eT*nT)+(nC-eC)/(eC*nC));}
+      return{name,logES,se};
+    }
+    if(dataType==='mean2'){
+      const m1=+s[1],sd1=+s[2],n1=+s[3],m2=+s[4],sd2=+s[5],n2=+s[6];
+      if([m1,sd1,n1,m2,sd2,n2].some(isNaN))return null;
+      const sp=Math.sqrt(((n1-1)*sd1*sd1+(n2-1)*sd2*sd2)/(n1+n2-2));
+      const logES=(m1-m2)/sp;
+      return{name,logES,se:Math.sqrt((n1+n2)/(n1*n2)+logES*logES/(2*(n1+n2))),isLinear:true};
+    }
+    if(dataType==='mean1'){const m=+s[1],sd=+s[2],n=+s[3];if([m,sd,n].some(isNaN))return null;return{name,logES:m,se:sd/Math.sqrt(n),isLinear:true};}
+    if(dataType==='prop'){
+      let e=+s[1],n=+s[2];
+      if(document.getElementById('chkContCorr').checked){e+=0.5;n+=1;}
+      if(isNaN(e)||isNaN(n)||n<=0||e<=0||e>=n)return null;
+      const p=e/n;return{name,logES:Math.log(p/(1-p)),se:Math.sqrt(1/e+1/(n-e)),prop:true};
+    }
+    if(dataType==='md_se'){const md=+s[1],se=+s[2];if(isNaN(md)||isNaN(se)||se<=0)return null;return{name,logES:md,se,isLinear:true,isMD:true};}
+    if(dataType==='smd_se'){const smd=+s[1],se=+s[2];if(isNaN(smd)||isNaN(se)||se<=0)return null;return{name,logES:smd,se,isLinear:true,isSMD:true};}
+  }catch(e){return null;}
+  return null;
+}
+
+function metaAnalysis(effects){
+  const k=effects.length;
+  if(k<2)return null;
+  const w=effects.map(e=>1/(e.se*e.se));
+  const wS=w.reduce((a,b)=>a+b,0);
+  const fixedES=effects.reduce((a,e,i)=>a+w[i]*e.logES,0)/wS;
+  const Q=effects.reduce((a,e,i)=>a+w[i]*(e.logES-fixedES)**2,0);
+  const df=k-1;
+  const pQ=chiPval(Q,df);
+  const I2=Math.max(0,(Q-df)/Q*100);
+  const C=wS-effects.reduce((a,e,i)=>a+w[i]*w[i],0)/wS;
+  const tau2=Math.max(0,(Q-df)/C);
+  const model=document.getElementById('modelSelect').value;
+  let pooledES,pooledSE,wFinal;
+  if(model==='fixed'){pooledES=fixedES;pooledSE=Math.sqrt(1/wS);wFinal=w;}
+  else{
+    const wRE=effects.map(e=>1/(e.se*e.se+tau2));
+    const wRES=wRE.reduce((a,b)=>a+b,0);
+    pooledES=effects.reduce((a,e,i)=>a+wRE[i]*e.logES,0)/wRES;
+    pooledSE=Math.sqrt(1/wRES);
+    if(document.getElementById('chkKnapp').checked&&k>1){const q=effects.reduce((a,e,i)=>a+wRE[i]*(e.logES-pooledES)**2,0)/df;pooledSE*=Math.sqrt(q);}
+    wFinal=wRE;
+  }
+  const z=pooledES/pooledSE;
+  const pZ=2*(1-jsnorm(Math.abs(z)));
+  const lo95=pooledES-1.96*pooledSE,hi95=pooledES+1.96*pooledSE;
+  const tc=getTcrit(Math.max(df,1));
+  const piLo=pooledES-tc*Math.sqrt(tau2+pooledSE**2),piHi=pooledES+tc*Math.sqrt(tau2+pooledSE**2);
+  return{k,Q,df,pQ,I2,tau2,tau:Math.sqrt(tau2),fixedES,pooledES,pooledSE,z,pZ,lo95,hi95,piLo,piHi,model,wFinal};
+}
+
+// ================================================================
+//  FORMAT
+// ================================================================
+function dp(){return document.getElementById('chk3dp').checked?3:2;}
+function fmt(v,isProp,isLin){
+  const d=dp();
+  if(isProp)return(Math.exp(v)/(1+Math.exp(v))*100).toFixed(d)+'%';
+  if(isLin)return v.toFixed(d);
+  return Math.exp(v).toFixed(d);
+}
+function fmtCI(lo,hi,isProp,isLin){return '['+fmt(lo,isProp,isLin)+'; '+fmt(hi,isProp,isLin)+']';}
+function pStr(p){return p<0.001?'<0.001':p.toFixed(3);}
+function getMeasureLabel(eff){
+  if(!eff)return '';
+  if(eff.prop)return'Proportion (%)';
+  if(eff.isMD)return'MD';
+  if(eff.isSMD)return'SMD';
+  if(eff.isLinear)return"Cohen's d";
+  return document.getElementById('measureSelect').value;
+}
+
+// ================================================================
+//  RUN ANALYSIS
+// ================================================================
+function runAnalysis(type){
+  hideErr();
+  const raw=getStudyData();
+  if(raw.length<2){showErr('Please enter at least 2 studies.');return;}
+  const effects=raw.map(computeLogEffect).filter(e=>e!==null);
+  if(effects.length<2){showErr('Could not parse enough valid studies.');return;}
+  const result=metaAnalysis(effects);
+  if(!result){showErr('Analysis failed. Check data.');return;}
+  lastResult={effects,result};
+  document.getElementById('resultsArea').style.display='block';
+  buildResultsTable(effects,result);
+  // Subgroup analysis
+  if(document.getElementById('chkSubgroup').checked) runSubgroupAnalysis(effects);
+  if(type==='forest'){switchTab('forest');setTimeout(()=>drawForestPlot(document.getElementById('forestCanvas'),effects,result),60);}
+  else if(type==='funnel'){switchTab('funnel');setTimeout(()=>drawFunnelPlot(document.getElementById('funnelCanvas'),effects,result),60);}
+  else{switchTab('results');}
+}
+
+// ================================================================
+//  SUBGROUP ANALYSIS
+// ================================================================
+// ================================================================
+//  SUBGROUP ANALYSIS — full canvas forest plot + results table
+// ================================================================
+function runSubgroupAnalysis(allEffects){
+  const sgMap=getSubgroupMap();
+  // Build ordered group structure preserving study order
+  const orderedGroups=[];
+  const groupIndex={};
+  studies.forEach((s,i)=>{
+    if(!s)return;
+    if(rowIsSubgroup[i]){
+      const g=s[0]||'Subgroup';
+      if(!groupIndex[g]){groupIndex[g]=orderedGroups.length;orderedGroups.push({name:g,effects:[]});}
+      return;
+    }
+    if(!s[0]||!s[0].trim())return;
+    const eff=computeLogEffect(s);
+    if(!eff)return;
+    const gName=sgMap[i]||'(No subgroup)';
+    if(!groupIndex[gName]&&gName!=='(No subgroup)'){groupIndex[gName]=orderedGroups.length;orderedGroups.push({name:gName,effects:[]});}
+    const gIdx=groupIndex[gName];
+    if(gIdx!==undefined) orderedGroups[gIdx].effects.push(eff);
+    else orderedGroups.push({name:gName,effects:[eff]});
+  });
+
+  const validGroups=orderedGroups.filter(g=>g.effects.length>0);
+  if(validGroups.length===0){
+    document.getElementById('subgroupContent').innerHTML=
+      '<div style="padding:24px;background:#fffbeb;border:1px solid #fcd34d;border-radius:8px;font-weight:700;color:#92400e">'+
+      'No subgroups found. To use subgroup analysis:<br><br>'+
+      '1. Check the "Subgroup analysis" checkbox above<br>'+
+      '2. Click <b>＋ Add subgroup header</b> in the study table<br>'+
+      '3. Type your subgroup name (e.g. "Low dose", "High dose")<br>'+
+      '4. Add studies below each header<br>'+
+      '5. Click ▶ Forest Plot again</div>';
+    return;
+  }
+
+  const isProp=!!allEffects[0].prop,isLin=!!(allEffects[0].isLinear||isProp);
+  const measure=getMeasureLabel(allEffects[0]);
+
+  // Summary table HTML
+  let tableHtml='<div style="margin-bottom:16px">'+
+    '<div class="summary-box"><strong>Subgroup Analysis</strong> — '+validGroups.length+' subgroup'+(validGroups.length>1?'s':'')+' identified</div></div>'+
+    '<div class="tbl-wrap"><table class="rtable">'+
+    '<thead><tr><th>Subgroup / Study</th><th>k</th><th>'+measure+'</th><th>95% CI Lo</th><th>95% CI Hi</th><th>I²</th><th>τ²</th><th>Z</th><th>p</th></tr></thead><tbody>';
+
+  validGroups.forEach(g=>{
+    const effs=g.effects;
+    if(effs.length>=2){
+      const r=metaAnalysis(effs);
+      if(r){
+        tableHtml+='<tr style="background:#dbeafe"><td style="padding:8px 10px;font-weight:700;color:#1e40af;font-size:13px">▸ '+g.name+' (Subtotal)</td>'+
+          '<td class="mono" style="font-weight:700">'+r.k+'</td>'+
+          '<td class="mono" style="font-weight:700">'+fmt(r.pooledES,isProp,isLin)+'</td>'+
+          '<td class="mono" style="font-weight:700">'+fmt(r.lo95,isProp,isLin)+'</td>'+
+          '<td class="mono" style="font-weight:700">'+fmt(r.hi95,isProp,isLin)+'</td>'+
+          '<td class="mono">'+r.I2.toFixed(1)+'%</td>'+
+          '<td class="mono">'+r.tau2.toFixed(3)+'</td>'+
+          '<td class="mono">'+r.z.toFixed(2)+'</td>'+
+          '<td class="mono '+(r.pZ<0.05?'p-sig':'p-ns')+'">'+pStr(r.pZ)+'</td></tr>';
+      }
+    } else {
+      tableHtml+='<tr style="background:#dbeafe"><td style="padding:8px 10px;font-weight:700;color:#1e40af">▸ '+g.name+' (1 study — cannot pool)</td>'+
+        '<td colspan="8" class="mono">—</td></tr>';
+    }
+    effs.forEach(e=>{
+      const lo=e.logES-1.96*e.se,hi=e.logES+1.96*e.se;
+      const z=e.logES/e.se,p=2*(1-jsnorm(Math.abs(z)));
+      tableHtml+='<tr><td style="padding:5px 10px 5px 28px">'+e.name+'</td>'+
+        '<td></td>'+
+        '<td class="mono">'+fmt(e.logES,isProp,isLin)+'</td>'+
+        '<td class="mono">'+fmt(lo,isProp,isLin)+'</td>'+
+        '<td class="mono">'+fmt(hi,isProp,isLin)+'</td>'+
+        '<td class="mono">—</td>'+
+        '<td class="mono">—</td>'+
+        '<td class="mono">'+z.toFixed(2)+'</td>'+
+        '<td class="mono '+(p<0.05?'p-sig':'p-ns')+'">'+pStr(p)+'</td></tr>';
+    });
+  });
+
+  // Overall across all studies
+  if(allEffects.length>=2){
+    const rAll=metaAnalysis(allEffects);
+    if(rAll){
+      tableHtml+='<tr style="background:#1e40af;color:#fff"><td style="padding:8px 10px;font-weight:700">Overall (all subgroups)</td>'+
+        '<td class="mono" style="color:#fff;font-weight:700">'+rAll.k+'</td>'+
+        '<td class="mono" style="color:#fff;font-weight:700">'+fmt(rAll.pooledES,isProp,isLin)+'</td>'+
+        '<td class="mono" style="color:#fff">'+fmt(rAll.lo95,isProp,isLin)+'</td>'+
+        '<td class="mono" style="color:#fff">'+fmt(rAll.hi95,isProp,isLin)+'</td>'+
+        '<td class="mono" style="color:#fff">'+rAll.I2.toFixed(1)+'%</td>'+
+        '<td class="mono" style="color:#fff">'+rAll.tau2.toFixed(3)+'</td>'+
+        '<td class="mono" style="color:#fff">'+rAll.z.toFixed(2)+'</td>'+
+        '<td class="mono" style="color:#fff">'+pStr(rAll.pZ)+'</td></tr>';
+    }
+  }
+  tableHtml+='</tbody></table></div>';
+
+  // Forest plot canvas for subgroups
+  tableHtml+='<div style="margin-top:18px"><div style="font-size:13px;font-weight:700;margin-bottom:8px;color:#1e40af">Subgroup Forest Plot</div>'+
+    '<div class="plot-wrap"><canvas id="subgroupCanvas"></canvas></div>'+
+    '<div class="dl-row"><button class="btn btn-secondary btn-sm" onclick="downloadPNG(\'subgroupCanvas\',\'subgroup_forest.png\')">⬇ PNG</button>'+
+    '<button class="btn btn-pdf btn-sm" onclick="exportPDF(\'forest\')">⬇ PDF</button></div></div>';
+
+  document.getElementById('subgroupContent').innerHTML=tableHtml;
+
+  // Draw subgroup forest plot
+  setTimeout(()=>{
+    const canvas=document.getElementById('subgroupCanvas');
+    if(!canvas)return;
+    drawSubgroupForestPlot(canvas,validGroups,allEffects,isProp,isLin,measure);
+  },80);
+}
+
+function drawSubgroupForestPlot(canvas,groups,allEffects,isProp,isLin,measure){
+  const T=getTheme();
+  // Count total rows: each group header + its studies + subtotal spacer
+  const rows=[]; // {type:'sg'|'study'|'subtotal', label, eff, result, group}
+  groups.forEach(g=>{
+    rows.push({type:'sg',label:g.name});
+    g.effects.forEach(e=>rows.push({type:'study',eff:e}));
+    if(g.effects.length>=2){
+      const r=metaAnalysis(g.effects);
+      if(r) rows.push({type:'subtotal',label:'Subtotal: '+g.name,result:r,group:g});
+    }
+    rows.push({type:'space'});
+  });
+  const overallResult=allEffects.length>=2?metaAnalysis(allEffects):null;
+  if(overallResult) rows.push({type:'overall',result:overallResult});
+
+  const rowH=30,titleH=52,headH=26,footH=70;
+  const W_CSS=Math.min(1060,(canvas.parentElement.clientWidth||1040)-20);
+  const H_CSS=titleH+headH+rowH*rows.length+footH+40;
+  const ctx=setupCanvas(canvas,W_CSS,H_CSS);
+
+  ctx.fillStyle='#fff'; ctx.fillRect(0,0,W_CSS,H_CSS);
+  ctx.fillStyle=T.bgBar; ctx.fillRect(0,0,W_CSS,titleH);
+  ctx.strokeStyle=T.barBorder; ctx.lineWidth=1.5;
+  ctx.beginPath(); ctx.moveTo(0,titleH); ctx.lineTo(W_CSS,titleH); ctx.stroke();
+  ctx.fillStyle=T.titleColor; ctx.font=T.titleFont;
+  ctx.textAlign='left'; ctx.fillText((document.getElementById('forestTitle').value||'Forest Plot')+' — Subgroup Analysis',18,30);
+  const sub=document.getElementById('forestSubtitle').value;
+  if(sub){ctx.fillStyle='#000';ctx.font='600 11px '+CF;ctx.fillText(sub,18,46);}
+
+  const labelW=Math.max(180,W_CSS*0.26),statW=220,wgtW=0;
+  const pX0=labelW+10,pX1=W_CSS-statW-20,pW=pX1-pX0;
+  const baseY=titleH+headH;
+
+  // Compute x range from all effects
+  let xMin=Infinity,xMax=-Infinity;
+  rows.forEach(row=>{
+    if(row.type==='study'){const lo=row.eff.logES-1.96*row.eff.se,hi=row.eff.logES+1.96*row.eff.se;xMin=Math.min(xMin,lo);xMax=Math.max(xMax,hi);}
+    if(row.type==='subtotal'||row.type==='overall'){xMin=Math.min(xMin,row.result.lo95);xMax=Math.max(xMax,row.result.hi95);}
+  });
+  const pad=(xMax-xMin)*0.18; xMin-=pad; xMax+=pad;
+  const toX=v=>pX0+(v-xMin)/(xMax-xMin)*pW;
+  const toY=ri=>baseY+ri*rowH+rowH/2;
+
+  // Header
+  ctx.fillStyle=T.headerBg; ctx.fillRect(0,titleH,W_CSS,headH);
+  ctx.strokeStyle=T.barBorder; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(0,titleH+headH); ctx.lineTo(W_CSS,titleH+headH); ctx.stroke();
+  ctx.fillStyle='#000'; ctx.font='700 10px '+CF;
+  ctx.textAlign='left'; ctx.fillText('STUDY / SUBGROUP',14,titleH+17);
+  ctx.textAlign='center'; ctx.fillText(measure.toUpperCase()+' (95% CI)',pX0+pW/2,titleH+17);
+  ctx.textAlign='left'; ctx.fillText('ES [95% CI]',pX1+8,titleH+17);
+
+  // Null line
+  const nullX=toX(0);
+  ctx.strokeStyle=T.gridColor; ctx.setLineDash([3,4]); ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(nullX,titleH+headH); ctx.lineTo(nullX,baseY+rows.length*rowH); ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Compute weights across all studies for square sizing
+  const allStudyEffects=rows.filter(r=>r.type==='study').map(r=>r.eff);
+  const allW=allStudyEffects.map(e=>1/(e.se*e.se));
+  const wTot=allW.reduce((a,b)=>a+b,0)||1;
+  let studyGlobalIdx=0;
+
+  rows.forEach((row,ri)=>{
+    const y=toY(ri);
+    if(row.type==='space') return;
+
+    if(row.type==='sg'){
+      // Subgroup header band
+      ctx.fillStyle='#e0eaff'; ctx.fillRect(0,baseY+ri*rowH,W_CSS,rowH);
+      ctx.strokeStyle='#93c5fd'; ctx.lineWidth=1;
+      ctx.beginPath(); ctx.moveTo(0,baseY+ri*rowH); ctx.lineTo(W_CSS,baseY+ri*rowH); ctx.stroke();
+      ctx.fillStyle='#1e40af'; ctx.font='700 13px '+CF; ctx.textAlign='left';
+      ctx.fillText('▸ '+row.label,10,y+5);
+      return;
+    }
+
+    if(row.type==='study'){
+      const e=row.eff;
+      if(ri%2===1){ctx.fillStyle=T.zebraOdd;ctx.fillRect(0,baseY+ri*rowH,W_CSS,rowH);}
+      const lo=e.logES-1.96*e.se,hi=e.logES+1.96*e.se;
+      const xLo=Math.max(pX0,toX(lo)),xHi=Math.min(pX1,toX(hi)),xES=toX(e.logES);
+      const wP=allW[studyGlobalIdx]/wTot;
+      studyGlobalIdx++;
+      ctx.strokeStyle=sqColor; ctx.lineWidth=1.5;
+      ctx.beginPath(); ctx.moveTo(xLo,y); ctx.lineTo(xHi,y); ctx.stroke();
+      [xLo,xHi].forEach(cx=>{ctx.beginPath();ctx.moveTo(cx,y-4);ctx.lineTo(cx,y+4);ctx.stroke();});
+      const sq=Math.max(4,Math.sqrt(wP)*sqSizeScale);
+      ctx.fillStyle=sqColor; ctx.strokeStyle=adjCol(sqColor,-30); ctx.lineWidth=0.5;
+      ctx.fillRect(xES-sq/2,y-sq/2,sq,sq); ctx.strokeRect(xES-sq/2,y-sq/2,sq,sq);
+      ctx.fillStyle='#000'; ctx.font='700 12px '+CF; ctx.textAlign='left';
+      ctx.fillText('  '+e.name,14,y+5);
+      ctx.fillStyle='#000'; ctx.font='700 11px '+CF;
+      ctx.fillText(fmt(e.logES,isProp,isLin)+'  ['+fmt(lo,isProp,isLin)+'; '+fmt(hi,isProp,isLin)+']',pX1+8,y+4);
+      return;
+    }
+
+    if(row.type==='subtotal'){
+      const r=row.result;
+      ctx.fillStyle='#f0f8ff'; ctx.fillRect(0,baseY+ri*rowH,W_CSS,rowH);
+      ctx.strokeStyle='#bfdbfe'; ctx.lineWidth=0.8;
+      ctx.beginPath(); ctx.moveTo(14,baseY+ri*rowH); ctx.lineTo(W_CSS-14,baseY+ri*rowH); ctx.stroke();
+      const dxL=Math.max(pX0,toX(r.lo95)),dxR=Math.min(pX1,toX(r.hi95)),dxC=toX(r.pooledES);
+      ctx.fillStyle=sqColor; ctx.strokeStyle=adjCol(sqColor,-30); ctx.lineWidth=0.8;
+      ctx.beginPath(); ctx.moveTo(dxC,y-10); ctx.lineTo(dxR,y); ctx.lineTo(dxC,y+10); ctx.lineTo(dxL,y); ctx.closePath();
+      ctx.fill(); ctx.stroke();
+      ctx.fillStyle='#1e40af'; ctx.font='700 12px '+CF; ctx.textAlign='left';
+      ctx.fillText('  Subtotal: I²='+r.I2.toFixed(0)+'%',14,y+5);
+      ctx.fillStyle='#1e40af'; ctx.font='700 11px '+CF;
+      ctx.fillText(fmt(r.pooledES,isProp,isLin)+'  ['+fmt(r.lo95,isProp,isLin)+'; '+fmt(r.hi95,isProp,isLin)+']',pX1+8,y+4);
+      return;
+    }
+
+    if(row.type==='overall'){
+      const r=row.result;
+      // Separator line
+      ctx.strokeStyle='#475569'; ctx.lineWidth=2;
+      ctx.beginPath(); ctx.moveTo(14,baseY+ri*rowH); ctx.lineTo(W_CSS-14,baseY+ri*rowH); ctx.stroke();
+      const dxL=Math.max(pX0,toX(r.lo95)),dxR=Math.min(pX1,toX(r.hi95)),dxC=toX(r.pooledES);
+      ctx.fillStyle=diColor; ctx.strokeStyle=adjCol(diColor,-30); ctx.lineWidth=0.8;
+      ctx.beginPath(); ctx.moveTo(dxC,y-11); ctx.lineTo(dxR,y); ctx.lineTo(dxC,y+11); ctx.lineTo(dxL,y); ctx.closePath();
+      ctx.fill(); ctx.stroke();
+      ctx.fillStyle='#000'; ctx.font='700 13px '+CF; ctx.textAlign='left';
+      ctx.fillText('Overall',14,y+5);
+      ctx.fillStyle=diColor; ctx.font='700 11px '+CF;
+      ctx.fillText(fmt(r.pooledES,isProp,isLin)+'  ['+fmt(r.lo95,isProp,isLin)+'; '+fmt(r.hi95,isProp,isLin)+']',pX1+8,y+4);
+    }
+  });
+
+  // X axis
+  const axY=baseY+rows.length*rowH+10;
+  ctx.strokeStyle='#475569'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(pX0,axY); ctx.lineTo(pX1,axY); ctx.stroke();
+  for(let i=0;i<=6;i++){
+    const v=xMin+i*(xMax-xMin)/6,x=toX(v);
+    let lab=isLin?v.toFixed(1):isProp?(Math.exp(v)/(1+Math.exp(v))*100).toFixed(1)+'%':Math.exp(v).toFixed(2);
+    ctx.strokeStyle='#475569'; ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(x,axY); ctx.lineTo(x,axY+4); ctx.stroke();
+    ctx.fillStyle='#000'; ctx.font='700 10px '+CF; ctx.textAlign='center'; ctx.fillText(lab,x,axY+14);
+  }
+  const xLbl=document.getElementById('xAxisLabel').value||(isProp?'Proportion (%)':isLin?'Effect Size':document.getElementById('measureSelect').value);
+  ctx.fillStyle='#000'; ctx.font='700 12px '+CF; ctx.textAlign='center'; ctx.fillText(xLbl,pX0+pW/2,axY+30); ctx.textAlign='left';
+
+  // Footnote
+  const r=overallResult;
+  if(r){
+    ctx.fillStyle='#000'; ctx.font='700 10px '+CF;
+    ctx.fillText('Overall: Q='+r.Q.toFixed(2)+', I²='+r.I2.toFixed(1)+'%, τ²='+r.tau2.toFixed(3)+'   Z='+r.z.toFixed(2)+', p='+pStr(r.pZ),14,axY+46);
+    ctx.fillText('Model: '+(r.model==='random'?'Random Effects':'Fixed Effect')+'   k='+r.k+' studies total',14,axY+60);
+  }
+}
+
+// ================================================================
+//  LEAVE-ONE-OUT — works with k>=2
+// ================================================================
+function runLOO(){
+  hideErr();
+  const raw=getStudyData();
+  if(raw.length<2){showErr('Need at least 2 studies for LOO analysis.');return;}
+  const effects=raw.map(computeLogEffect).filter(e=>e!==null);
+  if(effects.length<2){showErr('Not enough valid studies.');return;}
+  const isProp=!!effects[0].prop,isLin=!!(effects[0].isLinear||isProp);
+  const looResults=[];
+  effects.forEach((_,i)=>{
+    const sub=effects.filter((_,j)=>j!==i);
+    if(sub.length<1){looResults.push({omitted:effects[i].name,result:null});return;}
+    const r=sub.length>=2?metaAnalysis(sub):null;
+    looResults.push({omitted:effects[i].name,result:r});
+  });
+  if(!lastResult)lastResult={effects,result:metaAnalysis(effects)};
+  document.getElementById('resultsArea').style.display='block';
+  switchTab('loo');
+  const validLoo=looResults.filter(l=>l.result);
+  if(validLoo.length>0){
+    const ess=validLoo.map(l=>l.result.pooledES);
+    const minE=Math.min(...ess),maxE=Math.max(...ess);
+    const robust=(maxE-minE)<0.15;
+    document.getElementById('looSummary').style.display='block';
+    document.getElementById('looSummary').innerHTML=
+      '<strong>Leave-One-Out Sensitivity</strong> (k='+effects.length+' studies)<br>'+
+      'Pooled estimate range: <strong>'+fmt(minE,isProp,isLin)+'</strong> to <strong>'+fmt(maxE,isProp,isLin)+'</strong>.<br>'+
+      (robust?'<b style="color:var(--green)">Robust</b> — no single study materially changes the conclusion.':
+               '<b style="color:var(--warn)">May be sensitive</b> to one or more studies.');
+  }
+  if(effects.length>=2) setTimeout(()=>drawLOOPlot(document.getElementById('looCanvas'),effects,looResults,isProp,isLin),60);
+  const tbl=document.getElementById('looTable');
+  tbl.innerHTML='<thead><tr><th>Study omitted</th><th>k left</th><th>Pooled ES</th><th>CI Lo</th><th>CI Hi</th><th>I²</th><th>Z</th><th>p</th><th>Note</th></tr></thead>';
+  const tb=document.createElement('tbody');
+  looResults.forEach(({omitted,result:r})=>{
+    const tr=document.createElement('tr');
+    if(!r){
+      tr.innerHTML='<td><b>'+omitted+'</b></td><td colspan="8" style="color:#555;font-weight:600">Only 1 study remaining — cannot pool</td>';
+    } else {
+      tr.innerHTML='<td><b>'+omitted+'</b></td><td class="mono">'+r.k+'</td>'+
+        '<td class="mono">'+fmt(r.pooledES,isProp,isLin)+'</td>'+
+        '<td class="mono">'+fmt(r.lo95,isProp,isLin)+'</td>'+
+        '<td class="mono">'+fmt(r.hi95,isProp,isLin)+'</td>'+
+        '<td class="mono">'+r.I2.toFixed(1)+'%</td>'+
+        '<td class="mono">'+r.z.toFixed(2)+'</td>'+
+        '<td class="mono '+(r.pZ<0.05?'p-sig':'p-ns')+'">'+pStr(r.pZ)+'</td>'+
+        '<td></td>';
+    }
+    tb.appendChild(tr);
+  });
+  tbl.appendChild(tb);
+}
+
+// ================================================================
+//  EGGER'S TEST — works with k>=2
+// ================================================================
+function runEgger(){
+  hideErr();
+  const raw=getStudyData();
+  if(raw.length<2){showErr("Need at least 2 studies for Egger's test.");return;}
+  const effects=raw.map(computeLogEffect).filter(e=>e!==null);
+  if(effects.length<2){showErr("Not enough valid studies.");return;}
+
+  const k=effects.length;
+  // Egger's regression: regress standardised effect (logES/SE) on precision (1/SE)
+  // y = alpha + beta*x where x=1/SE, y=logES/SE
+  // alpha (intercept) = bias; beta (slope) ≈ true effect size
+  const xArr=effects.map(e=>1/e.se);
+  const yArr=effects.map(e=>e.logES/e.se);
+  const xm=xArr.reduce((a,b)=>a+b,0)/k;
+  const ym=yArr.reduce((a,b)=>a+b,0)/k;
+  const ssxx=xArr.reduce((a,v)=>a+(v-xm)**2,0);
+  const ssxy=xArr.reduce((a,v,i)=>a+(v-xm)*(yArr[i]-ym),0);
+
+  // Guard: ssxx=0 means all SEs identical => no precision variation => test undefined
+  if(!isFinite(ssxx)||ssxx<1e-12){
+    showErr("Egger's test cannot be computed: all standard errors are identical (no precision variation).");
+    return;
+  }
+
+  const beta=ssxy/ssxx;
+  const alpha=ym-beta*xm;
+  const df=k-2;
+  let pEgger=null,tStat=null,seAlpha=null;
+
+  if(df>0){
+    const yhat=xArr.map(v=>alpha+beta*v);
+    const sse=yArr.reduce((a,v,i)=>a+(v-yhat[i])**2,0);
+    const mse=sse/df; // mean squared error of regression
+    const varAlpha=mse*(1/k+xm*xm/ssxx);
+    if(!isFinite(varAlpha)||varAlpha<0){
+      showErr("Egger's test: numerical instability. Check your data for extreme values.");
+      return;
+    }
+    seAlpha=Math.sqrt(varAlpha);
+    if(seAlpha<1e-12){
+      pEgger=alpha===0?1:0;
+      tStat=alpha===0?0:Infinity;
+    } else {
+      tStat=alpha/seAlpha;
+      // Correct two-tailed p-value:
+      // p = I_x(df/2, 0.5) where x = df/(df+t^2)
+      // This is exact and always in [0,1]
+      pEgger=twoTailPfromT(tStat,df);
+    }
+  }
+
+  // Final clamp to [0,1] as safety net
+  if(pEgger!==null) pEgger=Math.max(0,Math.min(1,pEgger));
+
+  const sig=pEgger!==null&&pEgger<0.05;
+  const pCol=sig?'#7f1d1d':'#14532d';
+  const pBg=sig?'#fee2e2':'#d1fae5';
+  const pBdr=sig?'#f87171':'#6ee7b7';
+  const box=document.getElementById('eggerBox');
+  box.style.display='block';
+  let html='<div style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:10px">&#128200; Egger\'s Regression Test for Funnel Plot Asymmetry</div>'+
+    '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;font-size:13px;margin-bottom:12px">'+
+    '<div><strong>Intercept (bias)</strong><br><span class="mono">'+(isFinite(alpha)?alpha.toFixed(4):'N/A')+'</span></div>'+
+    '<div><strong>SE (intercept)</strong><br><span class="mono">'+(seAlpha!==null&&isFinite(seAlpha)?seAlpha.toFixed(4):'N/A (k=2)')+'</span></div>'+
+    '<div><strong>t-statistic</strong><br><span class="mono">'+(tStat!==null&&isFinite(tStat)?tStat.toFixed(3):'N/A')+'</span></div>'+
+    '<div><strong>df</strong><br><span class="mono">'+df+'</span></div>'+
+    '<div><strong>p-value (2-tailed)</strong><br><span class="mono" style="font-size:14px;color:'+(pEgger!==null?pCol:'#555')+';font-weight:700">'+(pEgger!==null?pStr(pEgger):'N/A')+'</span></div>'+
+    '</div>';
+  if(df<=0){
+    html+='<div style="padding:10px 14px;border-radius:8px;background:#fffbeb;border:1px solid #fcd34d;font-size:13px;color:#92400e;font-weight:600">'+
+      'With k=2 studies, df=0 — p-value cannot be computed. Intercept = '+(isFinite(alpha)?alpha.toFixed(4):'N/A')+
+      '. At least 3 studies are needed for a valid Egger\'s test.</div>';
+  } else {
+    const pMsg=sig
+      ?'<b>Significant asymmetry detected</b> (p = '+pStr(pEgger)+' &lt; 0.05). Possible publication bias or small-study effects. Interpret the pooled estimate with caution.'
+      :'<b>No significant asymmetry</b> (p = '+pStr(pEgger)+' &ge; 0.05). No statistical evidence of publication bias. Note: Egger\'s test has low power with k &lt; 10 studies.';
+    html+='<div style="padding:10px 14px;border-radius:8px;background:'+pBg+';border:1px solid '+pBdr+';font-size:13px;color:'+pCol+';font-weight:600">'+pMsg+'</div>';
+  }
+  html+='<div style="font-size:11px;color:#333;margin-top:8px;font-weight:600;line-height:1.7">'+
+    'Egger M, Smith GD, Schneider M, Minder C. <i>BMJ</i> 1997;315:629–634.<br>'+
+    'Method: OLS regression of standardised effect (y<sub>i</sub>/SE<sub>i</sub>) on precision (1/SE<sub>i</sub>); intercept tests asymmetry.<br>'+
+    '<span style="color:#92400e">⚠ Note: Results match Stata\'s <code>metabias</code> only when identical data are entered in the same scale (log vs original). Continuity correction changes effect estimates and therefore the Egger\'s test result.</span>'+
+    '</div>';
+  box.innerHTML=html;
+  box.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+// ================================================================
+//  RESULTS TABLE
+// ================================================================
+function buildResultsTable(effects,result){
+  const isProp=!!effects[0].prop,isLin=!!(effects[0].isLinear||isProp);
+  const measure=getMeasureLabel(effects[0]);
+  const wArr=result.wFinal,wTot=wArr.reduce((a,b)=>a+b,0);
+  const tbl=document.getElementById('resultsTable');
+  tbl.innerHTML='<thead><tr><th>Study</th><th>'+measure+'</th><th>95% CI Lo</th><th>95% CI Hi</th><th>log(ES)</th><th>SE</th><th>Weight%</th><th>Z</th><th>p-value</th></tr></thead>';
+  const tb=document.createElement('tbody');
+  effects.forEach((e,i)=>{
+    const lo=e.logES-1.96*e.se,hi=e.logES+1.96*e.se;
+    const z=e.logES/e.se,p=2*(1-jsnorm(Math.abs(z)));
+    const tr=document.createElement('tr');
+    tr.innerHTML='<td>'+e.name+'</td>'+
+      '<td class="mono">'+fmt(e.logES,isProp,isLin)+'</td>'+
+      '<td class="mono">'+fmt(lo,isProp,isLin)+'</td>'+
+      '<td class="mono">'+fmt(hi,isProp,isLin)+'</td>'+
+      '<td class="mono">'+e.logES.toFixed(dp())+'</td>'+
+      '<td class="mono">'+e.se.toFixed(dp())+'</td>'+
+      '<td class="mono">'+(wArr[i]/wTot*100).toFixed(1)+'%</td>'+
+      '<td class="mono">'+z.toFixed(2)+'</td>'+
+      '<td class="mono '+(p<0.05?'p-sig':'p-ns')+'">'+pStr(p)+'</td>';
+    tb.appendChild(tr);
+  });
+  tbl.appendChild(tb);
+  const r=result;
+  const sig=r.pZ<0.05?'<b style="color:var(--green)">statistically significant</b>':'not statistically significant';
+  const het=r.I2>75?'<b style="color:var(--danger)">considerable (I²>75%)</b>':r.I2>50?'<b style="color:var(--warn)">substantial</b>':r.I2>25?'moderate':'low';
+  document.getElementById('summaryBox').innerHTML=
+    '<strong>k</strong> = '+r.k+' &nbsp;·&nbsp; <strong>Model</strong>: '+(r.model==='random'?'Random Effects (DL)':'Fixed Effect')+'<br>'+
+    '<strong>Pooled '+measure+'</strong>: '+fmt(r.pooledES,isProp,isLin)+' '+fmtCI(r.lo95,r.hi95,isProp,isLin)+'<br>'+
+    '<strong>Overall effect</strong>: Z = '+r.z.toFixed(2)+', p = '+pStr(r.pZ)+' → '+sig+'<br>'+
+    '<strong>Heterogeneity</strong>: Q='+r.Q.toFixed(2)+' (df='+r.df+'), p='+pStr(r.pQ)+', I²='+r.I2.toFixed(1)+'% ('+het+'), τ²='+r.tau2.toFixed(4)+'<br>'+
+    '<strong>Prediction interval</strong>: '+fmtCI(r.piLo,r.piHi,isProp,isLin);
+}
+
+// ================================================================
+//  THEMES
+// ================================================================
+function getTheme(){
+  const themes={
+    revman:{bgBar:'#eff6ff',barBorder:'#93c5fd',titleColor:'#1e40af',titleFont:'700 16px '+CF,headerBg:'#dbeafe',zebraOdd:'#f8faff',ciCol:sqColor,gridColor:'#94a3b8',axisColor:'#475569'},
+    bw:{bgBar:'#f0f0f0',barBorder:'#999',titleColor:'#000',titleFont:'700 15px '+CF,headerBg:'#e0e0e0',zebraOdd:'#f8f8f8',ciCol:'#000',gridColor:'#aaa',axisColor:'#555'},
+    jama:{bgBar:'#fff3e0',barBorder:'#ffcc80',titleColor:'#7c0000',titleFont:'700 15px '+CF,headerBg:'#ffe0b2',zebraOdd:'#fff8f0',ciCol:sqColor,gridColor:'#cca070',axisColor:'#8b5e3c'},
+    stata:{bgBar:'#e3f2fd',barBorder:'#64b5f6',titleColor:'#003366',titleFont:'700 14px '+CF,headerBg:'#bbdefb',zebraOdd:'#f0f8ff',ciCol:sqColor,gridColor:'#7eb5e0',axisColor:'#3060a0'},
+    lancet:{bgBar:'#fce4ec',barBorder:'#f48fb1',titleColor:'#880022',titleFont:'700 15px '+CF,headerBg:'#f8bbd9',zebraOdd:'#fff0f4',ciCol:sqColor,gridColor:'#d08080',axisColor:'#a05060'},
+    bmj:{bgBar:'#e8f5e9',barBorder:'#81c784',titleColor:'#1b5e20',titleFont:'700 15px '+CF,headerBg:'#c8e6c9',zebraOdd:'#f1fff2',ciCol:sqColor,gridColor:'#70c080',axisColor:'#3a8a4a'},
+  };
+  return themes[layoutName]||themes.revman;
+}
+
+// ================================================================
+//  COLOR HELPERS
+// ================================================================
+function adjCol(hex,amt){
+  const n=parseInt(hex.replace('#',''),16);
+  const r=Math.min(255,Math.max(0,(n>>16)+amt));
+  const g=Math.min(255,Math.max(0,((n>>8)&0xff)+amt));
+  const b=Math.min(255,Math.max(0,(n&0xff)+amt));
+  return 'rgb('+r+','+g+','+b+')';
+}
+function hexRgba(hex,a){const n=parseInt(hex.replace('#',''),16);return 'rgba('+(n>>16)+','+((n>>8)&255)+','+(n&255)+','+a+')';}
+
+// ================================================================
+//  HIGH-QUALITY CANVAS SETUP (user-selected DPR)
+// ================================================================
+function setupCanvas(canvas,W_CSS,H_CSS){
+  const userScale=parseInt(document.getElementById('pngScale').value)||4;
+  // Use max of devicePixelRatio and user-selected for display; use user-selected for export quality
+  const DPR=Math.max(window.devicePixelRatio||1, userScale);
+  canvas.style.width=W_CSS+'px'; canvas.style.height=H_CSS+'px';
+  canvas.width=Math.round(W_CSS*DPR); canvas.height=Math.round(H_CSS*DPR);
+  const ctx=canvas.getContext('2d');
+  ctx.scale(DPR,DPR);
+  // Enable best image smoothing
+  ctx.imageSmoothingEnabled=true;
+  ctx.imageSmoothingQuality='high';
+  return ctx;
+}
+
+// ================================================================
+//  DRAW FOREST PLOT
+// ================================================================
+function drawForestPlot(canvas,effects,result){
+  const isProp=!!effects[0].prop,isLin=!!(effects[0].isLinear||isProp);
+  const T=getTheme();
+  const sgEnabled=document.getElementById('chkSubgroup').checked;
+  const sgMap=sgEnabled?getSubgroupMap():{};
+
+  // Build ordered rows: subgroup headers + studies
+  const rows=[];
+  let lastSG='';
+  studies.forEach((s,i)=>{
+    if(!s)return;
+    if(rowIsSubgroup[i]){rows.push({type:'sg',label:s[0]||'Group'});return;}
+    if(!s[0]||!s[0].trim())return;
+    const eff=computeLogEffect(s);
+    if(!eff)return;
+    if(sgEnabled&&sgMap[i]&&sgMap[i]!==lastSG){lastSG=sgMap[i];}
+    rows.push({type:'study',eff,sg:sgEnabled?sgMap[i]:null});
+  });
+
+  const k=rows.filter(r=>r.type==='study').length;
+  const W_CSS=Math.min(1060,(canvas.parentElement.clientWidth||1040)-20);
+  const rowH=34,titleH=56,headH=28,footH=84;
+  const H_CSS=titleH+headH+rowH*(rows.length+3)+footH;
+  const ctx=setupCanvas(canvas,W_CSS,H_CSS);
+
+  ctx.fillStyle='#fff'; ctx.fillRect(0,0,W_CSS,H_CSS);
+  ctx.fillStyle=T.bgBar; ctx.fillRect(0,0,W_CSS,titleH);
+  ctx.strokeStyle=T.barBorder; ctx.lineWidth=1.5;
+  ctx.beginPath(); ctx.moveTo(0,titleH); ctx.lineTo(W_CSS,titleH); ctx.stroke();
+
+  const titleText=document.getElementById('forestTitle').value||'Forest Plot';
+  const subText=document.getElementById('forestSubtitle').value;
+  ctx.fillStyle=T.titleColor; ctx.font=T.titleFont; ctx.textAlign='left';
+  ctx.fillText(titleText,18,30);
+  if(subText){ctx.fillStyle='#000';ctx.font='600 11px '+CF;ctx.fillText(subText,18,48);}
+  const mLabel=getMeasureLabel(effects[0]);
+  ctx.fillStyle='#000'; ctx.font='700 11px '+CF; ctx.textAlign='right';
+  ctx.fillText(mLabel,W_CSS-10,44); ctx.textAlign='left';
+
+  const labelW=Math.max(170,W_CSS*0.24),statW=235,wgtW=52;
+  const pX0=labelW+10,pX1=W_CSS-statW-wgtW-10,pW=pX1-pX0;
+  const baseY=titleH+headH;
+
+  let allLo=effects.map(e=>e.logES-1.96*e.se),allHi=effects.map(e=>e.logES+1.96*e.se);
+  allLo.push(result.lo95,result.piLo); allHi.push(result.hi95,result.piHi);
+  let xMin=Math.min(...allLo),xMax=Math.max(...allHi);
+  const pad=(xMax-xMin)*0.18; xMin-=pad; xMax+=pad;
+  const toX=v=>pX0+(v-xMin)/(xMax-xMin)*pW;
+  const toY=ri=>baseY+ri*rowH+rowH/2;
+
+  // Header
+  ctx.fillStyle=T.headerBg; ctx.fillRect(0,titleH,W_CSS,headH);
+  ctx.strokeStyle=T.barBorder; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(0,titleH+headH); ctx.lineTo(W_CSS,titleH+headH); ctx.stroke();
+  ctx.fillStyle='#000'; ctx.font='700 10px '+CF;
+  ctx.textAlign='left'; ctx.fillText('STUDY',14,titleH+18);
+  ctx.textAlign='center'; ctx.fillText(mLabel.toUpperCase()+' (95% CI)',pX0+pW/2,titleH+18);
+  ctx.textAlign='left'; ctx.fillText('ES (95% CI)',pX1+8,titleH+18);
+  ctx.textAlign='right'; ctx.fillText('WEIGHT',W_CSS-6,titleH+18); ctx.textAlign='left';
+
+  // Null line
+  const nullX=toX(0);
+  ctx.strokeStyle=T.gridColor; ctx.setLineDash([3,4]); ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(nullX,titleH+headH); ctx.lineTo(nullX,baseY+(rows.length+2)*rowH+5); ctx.stroke();
+  ctx.setLineDash([]);
+
+  const wArr=result.wFinal,wTot=wArr.reduce((a,b)=>a+b,0);
+  let studyIdx=0;
+
+  rows.forEach((row,ri)=>{
+    const y=toY(ri);
+    if(row.type==='sg'){
+      // Subgroup header row
+      ctx.fillStyle='#dbeafe'; ctx.fillRect(0,baseY+ri*rowH,W_CSS,rowH);
+      ctx.fillStyle='#1e40af'; ctx.font='700 13px '+CF; ctx.textAlign='left';
+      ctx.fillText('▸ '+row.label,14,y+5);
+      ctx.strokeStyle='#93c5fd'; ctx.lineWidth=1;
+      ctx.beginPath(); ctx.moveTo(0,baseY+ri*rowH); ctx.lineTo(W_CSS,baseY+ri*rowH); ctx.stroke();
+      return;
+    }
+    const e=row.eff;
+    if(ri%2===1){ctx.fillStyle=T.zebraOdd;ctx.fillRect(0,baseY+ri*rowH,W_CSS,rowH);}
+    const lo=e.logES-1.96*e.se,hi=e.logES+1.96*e.se;
+    const xES=toX(e.logES),xLo=Math.max(pX0,toX(lo)),xHi=Math.min(pX1,toX(hi));
+    const wP=wArr[studyIdx]/wTot;
+
+    ctx.strokeStyle=T.ciCol; ctx.lineWidth=1.5;
+    ctx.beginPath(); ctx.moveTo(xLo,y); ctx.lineTo(xHi,y); ctx.stroke();
+    [xLo,xHi].forEach(cx=>{ctx.beginPath();ctx.moveTo(cx,y-4);ctx.lineTo(cx,y+4);ctx.stroke();});
+
+    const sq=Math.max(4,Math.sqrt(wP)*sqSizeScale);
+    ctx.fillStyle=sqColor; ctx.strokeStyle=adjCol(sqColor,-30); ctx.lineWidth=0.5;
+    ctx.fillRect(xES-sq/2,y-sq/2,sq,sq); ctx.strokeRect(xES-sq/2,y-sq/2,sq,sq);
+
+    ctx.fillStyle='#000'; ctx.font='700 13px '+CF; ctx.textAlign='left';
+    ctx.fillText(e.name.length>28?e.name.slice(0,26)+'…':e.name,14,y+5);
+    ctx.fillStyle='#000'; ctx.font='700 11px '+CF;
+    ctx.fillText(fmt(e.logES,isProp,isLin)+'  ['+fmt(lo,isProp,isLin)+'; '+fmt(hi,isProp,isLin)+']',pX1+8,y+4);
+    ctx.textAlign='right'; ctx.fillText((wP*100).toFixed(1)+'%',W_CSS-6,y+4); ctx.textAlign='left';
+    studyIdx++;
+  });
+
+  // Separator
+  const sepY=baseY+(rows.length+1)*rowH-rowH/2+4;
+  ctx.strokeStyle=T.axisColor; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.moveTo(14,sepY); ctx.lineTo(W_CSS-14,sepY); ctx.stroke();
+
+  const oy=toY(rows.length+1.5);
+  if(document.getElementById('chkPredInt').checked){
+    const pi0=Math.max(pX0,toX(result.piLo)),pi1=Math.min(pX1,toX(result.piHi));
+    ctx.strokeStyle='#b45309'; ctx.lineWidth=1.5; ctx.setLineDash([4,3]);
+    ctx.beginPath(); ctx.moveTo(pi0,oy); ctx.lineTo(pi1,oy); ctx.stroke();
+    ctx.setLineDash([]);
+    [pi0,pi1].forEach(px=>{ctx.beginPath();ctx.moveTo(px,oy-6);ctx.lineTo(px,oy+6);ctx.stroke();});
+  }
+
+  // Overall diamond
+  const dxL=Math.max(pX0,toX(result.lo95)),dxR=Math.min(pX1,toX(result.hi95)),dxC=toX(result.pooledES);
+  ctx.fillStyle=diColor; ctx.strokeStyle=adjCol(diColor,-30); ctx.lineWidth=0.8;
+  ctx.beginPath(); ctx.moveTo(dxC,oy-11); ctx.lineTo(dxR,oy); ctx.lineTo(dxC,oy+11); ctx.lineTo(dxL,oy); ctx.closePath();
+  ctx.fill(); ctx.stroke();
+  ctx.fillStyle='#000'; ctx.font='700 13px '+CF; ctx.textAlign='left';
+  ctx.fillText('Overall',14,oy+5);
+  ctx.fillStyle=diColor; ctx.font='700 11px '+CF;
+  ctx.fillText(fmt(result.pooledES,isProp,isLin)+'  ['+fmt(result.lo95,isProp,isLin)+'; '+fmt(result.hi95,isProp,isLin)+']',pX1+8,oy+4);
+  ctx.fillStyle='#000'; ctx.textAlign='right'; ctx.fillText('—',W_CSS-6,oy+4); ctx.textAlign='left';
+
+  // X axis
+  const axY=baseY+(rows.length+2)*rowH+10;
+  ctx.strokeStyle=T.axisColor; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(pX0,axY); ctx.lineTo(pX1,axY); ctx.stroke();
+  for(let i=0;i<=6;i++){
+    const v=xMin+i*(xMax-xMin)/6,x=toX(v);
+    let lab=isLin?v.toFixed(1):isProp?(Math.exp(v)/(1+Math.exp(v))*100).toFixed(1)+'%':Math.exp(v).toFixed(2);
+    ctx.strokeStyle=T.axisColor; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(x,axY); ctx.lineTo(x,axY+4); ctx.stroke();
+    ctx.fillStyle='#000'; ctx.font='700 10px '+CF; ctx.textAlign='center'; ctx.fillText(lab,x,axY+14);
+  }
+  const xLbl=document.getElementById('xAxisLabel').value||(isProp?'Proportion (%)':isLin?'Effect Size':document.getElementById('measureSelect').value);
+  ctx.fillStyle='#000'; ctx.font='700 12px '+CF; ctx.textAlign='center'; ctx.fillText(xLbl,pX0+pW/2,axY+30); ctx.textAlign='left';
+
+  const stY=axY+46;
+  if(document.getElementById('chkHetero').checked){
+    ctx.fillStyle='#000'; ctx.font='700 10px '+CF;
+    ctx.fillText('Heterogeneity: Q='+result.Q.toFixed(2)+', df='+result.df+', p='+pStr(result.pQ)+', I\u00B2='+result.I2.toFixed(1)+'%, \u03C4\u00B2='+result.tau2.toFixed(4),14,stY);
+  }
+  if(document.getElementById('chkOverall').checked){
+    ctx.fillStyle='#000'; ctx.font='700 10px '+CF;
+    ctx.fillText('Overall effect: Z='+result.z.toFixed(2)+', p='+pStr(result.pZ)+'   Model: '+(result.model==='random'?'Random Effects':'Fixed Effect')+'   k='+result.k,14,stY+15);
+  }
+  ctx.fillStyle=sqColor; ctx.fillRect(pX1+8,stY-8,10,10);
+  ctx.fillStyle='#000'; ctx.font='700 10px '+CF; ctx.fillText('Study (size \u221D weight)',pX1+22,stY);
+  ctx.fillStyle=diColor; ctx.fillRect(pX1+8,stY+6,16,10);
+  ctx.fillStyle='#000'; ctx.fillText('Pooled estimate',pX1+28,stY+15);
+}
+
+// ================================================================
+//  DRAW FUNNEL PLOT
+// ================================================================
+function drawFunnelPlot(canvas,effects,result){
+  const isProp=!!effects[0].prop,isLin=!!(effects[0].isLinear||isProp);
+  const T=getTheme();
+  const k=effects.length;
+
+  // ---- Compute Egger's test inline (always shown on funnel plot) ----
+  let eggerP=null,eggerAlpha=null,eggerT=null,eggerDf=k-2,eggerSig=false,eggerValid=false;
+  if(k>=2){
+    const xArr=effects.map(e=>1/e.se);
+    const yArr=effects.map(e=>e.logES/e.se);
+    const xm=xArr.reduce((a,b)=>a+b,0)/k;
+    const ym=yArr.reduce((a,b)=>a+b,0)/k;
+    const ssxx=xArr.reduce((a,v)=>a+(v-xm)**2,0);
+    const ssxy=xArr.reduce((a,v,i)=>a+(v-xm)*(yArr[i]-ym),0);
+    if(isFinite(ssxx)&&ssxx>1e-12){
+      const beta=ssxy/ssxx;
+      eggerAlpha=ym-beta*xm;
+      if(eggerDf>0){
+        const yhat=xArr.map(v=>eggerAlpha+beta*v);
+        const mse=yArr.reduce((a,v,i)=>a+(v-yhat[i])**2,0)/eggerDf;
+        const varA=mse*(1/k+xm*xm/ssxx);
+        if(isFinite(varA)&&varA>=0){
+          const seA=Math.sqrt(varA);
+          if(seA>1e-12){
+            eggerT=eggerAlpha/seA;
+            eggerP=Math.max(0,Math.min(1,twoTailPfromT(eggerT,eggerDf)));
+            eggerSig=eggerP<0.05;
+            eggerValid=true;
+          }
+        }
+      }
+    }
+  }
+  // Egger's footer adds 30px extra height
+  const eggerFootH=30;
+
+  const W_CSS=Math.min(680,(canvas.parentElement.clientWidth||660)-20);
+  const H_CSS=Math.round(W_CSS*0.68)+eggerFootH;
+  const ctx=setupCanvas(canvas,W_CSS,H_CSS);
+  ctx.fillStyle='#fff'; ctx.fillRect(0,0,W_CSS,H_CSS);
+  ctx.fillStyle=T.bgBar; ctx.fillRect(0,0,W_CSS,44);
+  ctx.strokeStyle=T.barBorder; ctx.lineWidth=1.5;
+  ctx.beginPath(); ctx.moveTo(0,44); ctx.lineTo(W_CSS,44); ctx.stroke();
+  ctx.fillStyle=T.titleColor; ctx.font=T.titleFont.replace(/\d+px/,'14px');
+  ctx.textAlign='left'; ctx.fillText(document.getElementById('funnelTitle').value||'Funnel Plot',18,28);
+  const pL=72,pR=26,pT=62,pB=54,pW=W_CSS-pL-pR,pH=H_CSS-pT-pB-eggerFootH;
+  const pooled=result.pooledES;
+  const spread=Math.max(pooled-Math.min(...effects.map(e=>e.logES)),Math.max(...effects.map(e=>e.logES))-pooled)+0.3;
+  const xMin=pooled-spread,xMax=pooled+spread;
+  const seMax=Math.max(...effects.map(e=>e.se))*1.15;
+  const toX=v=>pL+(v-xMin)/(xMax-xMin)*pW;
+  const toY=se=>pT+(se/seMax)*pH;
+
+  ctx.fillStyle='rgba(30,64,175,0.07)';
+  ctx.beginPath(); ctx.moveTo(toX(pooled),toY(0));
+  for(let i=0;i<=200;i++){const s=seMax*i/200;ctx.lineTo(toX(pooled+1.96*s),toY(s));}
+  for(let i=200;i>=0;i--){const s=seMax*i/200;ctx.lineTo(toX(pooled-1.96*s),toY(s));}
+  ctx.closePath(); ctx.fill();
+
+  ctx.strokeStyle=hexRgba(sqColor,0.5); ctx.lineWidth=1.5; ctx.setLineDash([6,3]);
+  for(const side of[1,-1]){
+    ctx.beginPath();
+    for(let i=0;i<=200;i++){const s=seMax*i/200;const x2=pooled+side*1.96*s;if(i===0)ctx.moveTo(toX(x2),toY(s));else ctx.lineTo(toX(x2),toY(s));}
+    ctx.stroke();
+  }
+  ctx.setLineDash([]);
+
+  ctx.strokeStyle=T.gridColor; ctx.lineWidth=0.7;
+  for(let i=1;i<=4;i++){const s=seMax*i/4;ctx.beginPath();ctx.moveTo(pL,toY(s));ctx.lineTo(pL+pW,toY(s));ctx.stroke();}
+
+  ctx.strokeStyle=diColor; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.moveTo(toX(pooled),toY(0)); ctx.lineTo(toX(pooled),toY(seMax)); ctx.stroke();
+
+  effects.forEach(e=>{
+    const x2=toX(e.logES),y2=toY(e.se);
+    const grd=ctx.createRadialGradient(x2-1,y2-1,0,x2,y2,7);
+    grd.addColorStop(0,hexRgba(sqColor,0.9)); grd.addColorStop(1,hexRgba(sqColor,0.6));
+    ctx.fillStyle=grd; ctx.strokeStyle=adjCol(sqColor,-30); ctx.lineWidth=0.8;
+    ctx.beginPath(); ctx.arc(x2,y2,6,0,Math.PI*2); ctx.fill(); ctx.stroke();
+  });
+
+  ctx.strokeStyle='#000'; ctx.lineWidth=1.5;
+  ctx.beginPath(); ctx.moveTo(pL,pT); ctx.lineTo(pL,pT+pH); ctx.lineTo(pL+pW,pT+pH); ctx.stroke();
+
+  for(let i=0;i<=4;i++){
+    const s=seMax*i/4,y2=toY(s);
+    ctx.strokeStyle='#555'; ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(pL-4,y2); ctx.lineTo(pL,y2); ctx.stroke();
+    ctx.fillStyle='#000'; ctx.font='700 10px '+CF; ctx.textAlign='right'; ctx.fillText(s.toFixed(2),pL-7,y2+4);
+  }
+  for(let i=0;i<=6;i++){
+    const v=xMin+i*(xMax-xMin)/6,x2=toX(v);
+    let lab=isLin?v.toFixed(2):isProp?(Math.exp(v)/(1+Math.exp(v))*100).toFixed(1)+'%':Math.exp(v).toFixed(2);
+    ctx.strokeStyle='#555'; ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(x2,pT+pH); ctx.lineTo(x2,pT+pH+4); ctx.stroke();
+    ctx.fillStyle='#000'; ctx.font='700 10px '+CF; ctx.textAlign='center'; ctx.fillText(lab,x2,pT+pH+16);
+  }
+  ctx.save(); ctx.translate(14,pT+pH/2); ctx.rotate(-Math.PI/2);
+  ctx.fillStyle='#000'; ctx.font='700 11px '+CF; ctx.textAlign='center'; ctx.fillText('Standard Error (SE)',0,0); ctx.restore();
+  const xLbl2=document.getElementById('xAxisLabel').value||(isLin?'Effect Size':isProp?'Proportion':('log('+document.getElementById('measureSelect').value+')'));
+  ctx.fillStyle='#000'; ctx.font='700 11px '+CF; ctx.textAlign='center'; ctx.fillText(xLbl2,pL+pW/2,pT+pH+28); ctx.textAlign='left';
+
+  // ---- Draw Egger's regression line on the funnel plot ----
+  if(eggerValid&&isFinite(eggerAlpha)){
+    // Reconstruct slope from the regression
+    const xArr2=effects.map(e=>1/e.se), yArr2=effects.map(e=>e.logES/e.se);
+    const xm2=xArr2.reduce((a,b)=>a+b,0)/k;
+    const ym2=yArr2.reduce((a,b)=>a+b,0)/k;
+    const ssxx2=xArr2.reduce((a,v)=>a+(v-xm2)**2,0);
+    const ssxy2=xArr2.reduce((a,v,i)=>a+(v-xm2)*(yArr2[i]-ym2),0);
+    const eggerBeta=ssxy2/ssxx2;
+    // Regression line: y = alpha + beta*x  where x=1/SE, y=logES/SE
+    // Convert to funnel plot coords: for each SE value, logES = alpha*SE + beta
+    // (because logES/SE = alpha + beta*(1/SE)  =>  logES = alpha*SE + beta)
+    // Draw line from seMax down to seMin (top to bottom)
+    const seStep=seMax/100;
+    ctx.strokeStyle='rgba(185,28,28,0.75)';
+    ctx.lineWidth=1.5; ctx.setLineDash([5,3]);
+    ctx.beginPath();
+    let started=false;
+    for(let s=0;s<=seMax;s+=seStep){
+      const predictedLogES=eggerAlpha*s+eggerBeta; // logES at this SE
+      const px=toX(predictedLogES), py=toY(s);
+      if(px>=pL&&px<=pL+pW){
+        if(!started){ctx.moveTo(px,py);started=true;}
+        else ctx.lineTo(px,py);
+      } else started=false;
+    }
+    ctx.stroke(); ctx.setLineDash([]);
+  }
+
+  // ---- Egger's p-value footer bar ----
+  const barY=H_CSS-eggerFootH;
+  // Separator line
+  ctx.strokeStyle='#ddd8cf'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(0,barY); ctx.lineTo(W_CSS,barY); ctx.stroke();
+
+  let eggerText,eggerColor,eggerBg;
+  if(!eggerValid){
+    // k=2: cannot compute p
+    eggerText='Egger\'s test: p-value cannot be computed (k < 3 or identical SEs)';
+    eggerColor='#92400e'; eggerBg='#fffbeb';
+  } else {
+    const pDisplay=pStr(eggerP);
+    const sigLabel=eggerSig?'significant asymmetry':'no significant asymmetry';
+    eggerColor=eggerSig?'#7f1d1d':'#14532d';
+    eggerBg=eggerSig?'#fee2e2':'#d1fae5';
+    eggerText='Egger\'s test: intercept = '+(isFinite(eggerAlpha)?eggerAlpha.toFixed(3):'N/A')+
+      ',  t = '+(eggerT!==null&&isFinite(eggerT)?eggerT.toFixed(3):'N/A')+
+      ',  df = '+eggerDf+
+      ',  p = '+pDisplay+
+      '  →  '+sigLabel;
+  }
+
+  // Coloured background strip
+  ctx.fillStyle=eggerBg;
+  ctx.fillRect(0,barY,W_CSS,eggerFootH);
+
+  // Bullet indicator circle
+  const circX=pL;
+  const circY=barY+eggerFootH/2;
+  ctx.fillStyle=eggerColor;
+  ctx.beginPath(); ctx.arc(circX,circY,5,0,Math.PI*2); ctx.fill();
+
+  // Text
+  ctx.fillStyle=eggerColor;
+  ctx.font='700 11px '+CF;
+  ctx.textAlign='left';
+  ctx.fillText(eggerText,pL+12,barY+eggerFootH/2+4);
+  ctx.textAlign='left';
+}
+
+// ================================================================
+//  LOO PLOT
+// ================================================================
+function drawLOOPlot(canvas,effects,looResults,isProp,isLin){
+  const T=getTheme();
+  const k=effects.length;
+  const validLoo=looResults.filter(l=>l.result);
+  const rowH=30,headH=40,footH=40,titleH=44;
+  const W_CSS=Math.min(980,(canvas.parentElement.clientWidth||900)-20);
+  const H_CSS=titleH+headH+(looResults.length+2)*rowH+footH;
+  const ctx=setupCanvas(canvas,W_CSS,H_CSS);
+  ctx.fillStyle='#fff'; ctx.fillRect(0,0,W_CSS,H_CSS);
+  ctx.fillStyle='#eff6ff'; ctx.fillRect(0,0,W_CSS,titleH);
+  ctx.strokeStyle='#93c5fd'; ctx.lineWidth=1.5;
+  ctx.beginPath(); ctx.moveTo(0,titleH); ctx.lineTo(W_CSS,titleH); ctx.stroke();
+  ctx.fillStyle='#1e40af'; ctx.font='700 15px '+CF; ctx.textAlign='left';
+  ctx.fillText(document.getElementById('looTitle').value||'Leave-One-Out Sensitivity Analysis',18,28);
+
+  const labelW=Math.max(160,W_CSS*0.23),statW=200;
+  const pX0=labelW+10,pX1=W_CSS-statW-10,pW=pX1-pX0;
+  const baseY=titleH+headH;
+  const fullResult=metaAnalysis(effects);
+  if(!fullResult)return;
+
+  let xMin=fullResult.lo95,xMax=fullResult.hi95;
+  validLoo.forEach(({result:r})=>{xMin=Math.min(xMin,r.lo95);xMax=Math.max(xMax,r.hi95);});
+  const pad=(xMax-xMin)*0.2; xMin-=pad; xMax+=pad;
+  const toX=v=>pX0+(v-xMin)/(xMax-xMin)*pW;
+  const toY=i=>baseY+i*rowH+rowH/2;
+
+  const overallX=toX(fullResult.pooledES);
+  ctx.strokeStyle='rgba(22,101,52,0.4)'; ctx.setLineDash([4,3]); ctx.lineWidth=1.5;
+  ctx.beginPath(); ctx.moveTo(overallX,titleH+headH); ctx.lineTo(overallX,baseY+(looResults.length+1)*rowH); ctx.stroke();
+  ctx.setLineDash([]);
+
+  const nullX=toX(0);
+  ctx.strokeStyle='#94a3b8'; ctx.setLineDash([2,4]); ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(nullX,titleH+headH); ctx.lineTo(nullX,baseY+(looResults.length+1)*rowH); ctx.stroke();
+  ctx.setLineDash([]);
+
+  ctx.fillStyle='#dbeafe'; ctx.fillRect(0,titleH,W_CSS,headH);
+  ctx.strokeStyle='#93c5fd'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(0,titleH+headH); ctx.lineTo(W_CSS,titleH+headH); ctx.stroke();
+  ctx.fillStyle='#000'; ctx.font='700 10px '+CF;
+  ctx.textAlign='left'; ctx.fillText('STUDY OMITTED',14,titleH+25);
+  ctx.textAlign='center'; ctx.fillText('POOLED EFFECT (95% CI)',pX0+pW/2,titleH+25);
+  ctx.textAlign='left'; ctx.fillText('ESTIMATE',pX1+8,titleH+25);
+
+  looResults.forEach(({omitted,result:r},i)=>{
+    const y=toY(i);
+    if(i%2===1){ctx.fillStyle='#f0f8ff';ctx.fillRect(0,baseY+i*rowH,W_CSS,rowH);}
+    ctx.fillStyle='#000'; ctx.font='700 13px '+CF; ctx.textAlign='left';
+    ctx.fillText(omitted.length>26?omitted.slice(0,24)+'…':omitted,14,y+5);
+    if(!r){
+      ctx.fillStyle='#555'; ctx.font='600 11px '+CF;
+      ctx.fillText('(only 1 study remaining)',pX0+8,y+4);
+      return;
+    }
+    const xLo=Math.max(pX0,toX(r.lo95)),xHi=Math.min(pX1,toX(r.hi95)),xC=toX(r.pooledES);
+    // Horizontal CI line
+    ctx.strokeStyle=sqColor; ctx.lineWidth=1.8;
+    ctx.beginPath(); ctx.moveTo(xLo,y); ctx.lineTo(xHi,y); ctx.stroke();
+    // Vertical end caps
+    [xLo,xHi].forEach(cx=>{
+      ctx.beginPath(); ctx.moveTo(cx,y-4); ctx.lineTo(cx,y+4); ctx.stroke();
+    });
+    // Filled square at pooled estimate (size = fixed, not weight-dependent in LOO)
+    const sq=9;
+    ctx.fillStyle=sqColor; ctx.strokeStyle=adjCol(sqColor,-30); ctx.lineWidth=0.5;
+    ctx.fillRect(xC-sq/2,y-sq/2,sq,sq);
+    ctx.strokeRect(xC-sq/2,y-sq/2,sq,sq);
+    // Text
+    ctx.fillStyle='#000'; ctx.font='700 11px '+CF;
+    ctx.textAlign='left';
+    ctx.fillText(fmt(r.pooledES,isProp,isLin)+' '+fmtCI(r.lo95,r.hi95,isProp,isLin),pX1+8,y+4);
+  });
+
+  const oy=toY(looResults.length+0.5);
+  ctx.strokeStyle='#ccc'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(14,oy-8); ctx.lineTo(W_CSS-14,oy-8); ctx.stroke();
+  const fdxL=Math.max(pX0,toX(fullResult.lo95)),fdxR=Math.min(pX1,toX(fullResult.hi95)),fdxC=toX(fullResult.pooledES);
+  ctx.fillStyle=diColor;
+  ctx.beginPath(); ctx.moveTo(fdxC,oy-9); ctx.lineTo(fdxR,oy); ctx.lineTo(fdxC,oy+9); ctx.lineTo(fdxL,oy); ctx.closePath(); ctx.fill();
+  ctx.fillStyle='#000'; ctx.font='700 12px '+CF; ctx.textAlign='left'; ctx.fillText('Overall (all studies)',14,oy+5);
+  ctx.fillStyle=diColor; ctx.font='700 11px '+CF;
+  ctx.fillText(fmt(fullResult.pooledES,isProp,isLin)+' '+fmtCI(fullResult.lo95,fullResult.hi95,isProp,isLin),pX1+8,oy+4);
+
+  const axY=baseY+(looResults.length+2)*rowH-10;
+  ctx.strokeStyle='#555'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(pX0,axY); ctx.lineTo(pX1,axY); ctx.stroke();
+  for(let i=0;i<=5;i++){
+    const v=xMin+i*(xMax-xMin)/5,x2=toX(v);
+    let lab=isLin?v.toFixed(2):isProp?(Math.exp(v)/(1+Math.exp(v))*100).toFixed(1)+'%':Math.exp(v).toFixed(2);
+    ctx.strokeStyle='#555'; ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(x2,axY); ctx.lineTo(x2,axY+4); ctx.stroke();
+    ctx.fillStyle='#000'; ctx.font='700 10px '+CF; ctx.textAlign='center'; ctx.fillText(lab,x2,axY+14);
+  }
+  ctx.fillStyle='#000'; ctx.font='700 11px '+CF; ctx.textAlign='center';
+  ctx.fillText('Pooled Effect Size (each row = that study omitted)',pX0+pW/2,axY+28); ctx.textAlign='left';
+}
+
+// ================================================================
+//  PDF EXPORT
+// ================================================================
+function exportPDF(type){
+  if(!lastResult){alert('Run analysis first.');return;}
+  const{effects,result:r}=lastResult;
+  const isProp=!!effects[0].prop,isLin=!!(effects[0].isLinear||isProp);
+  const measure=getMeasureLabel(effects[0]);
+  const wArr=r.wFinal,wTot=wArr.reduce((a,b)=>a+b,0);
+  const CAL="Calibri,Carlito,Arial,sans-serif";
+  const COU="Calibri,Carlito,sans-serif";
+
+  if(type==='forest'){
+    const title=document.getElementById('forestTitle').value||'Forest Plot';
+    const subtitle=document.getElementById('forestSubtitle').value;
+    const xLabel=document.getElementById('xAxisLabel').value||(isProp?'Proportion':isLin?'Effect Size':document.getElementById('measureSelect').value);
+    const rows=effects.map((e,i)=>{
+      const lo=e.logES-1.96*e.se,hi=e.logES+1.96*e.se;
+      const wPct=(wArr[i]/wTot*100).toFixed(1);
+      const barW=Math.round(wArr[i]/Math.max(...wArr)*80);
+      return '<tr style="border-bottom:1px solid #ddd;background:'+(i%2===0?'#f8faff':'#fff')+'">'+
+        '<td style="padding:5px 8px;font-weight:700">'+e.name+'</td>'+
+        '<td style="padding:5px 8px;text-align:center;font-family:'+COU+';white-space:nowrap">'+fmt(e.logES,isProp,isLin)+'</td>'+
+        '<td style="padding:5px 8px;text-align:center;font-family:'+COU+';white-space:nowrap">'+fmt(lo,isProp,isLin)+' to '+fmt(hi,isProp,isLin)+'</td>'+
+        '<td style="padding:5px 8px;text-align:right;font-family:'+COU+'">'+wPct+'%</td>'+
+        '<td style="padding:5px 8px;text-align:center"><div style="display:inline-block;width:'+barW+'px;height:8px;background:'+sqColor+';vertical-align:middle;border-radius:2px"></div></td>'+
+        '</tr>';
+    }).join('');
+    const html='<!DOCTYPE html><html><head><title>'+title+'</title>'+
+      '<style>@page{size:A4;margin:12mm}'+
+      'body{font-family:'+CAL+';font-size:12px;color:#000;margin:0;-webkit-print-color-adjust:exact;print-color-adjust:exact}'+
+      'h1{font-size:18px;font-weight:700;color:'+getTheme().titleColor+';margin:0 0 4px}'+
+      '.sub{font-size:10px;color:#333;margin-bottom:12px;font-weight:600}'+
+      'table{width:100%;border-collapse:collapse}'+
+      'th{background:#dbeafe;padding:6px 8px;text-align:left;font-family:'+COU+';font-size:10px;font-weight:700;border-bottom:2px solid #93c5fd}'+
+      '.overall-row{background:#1e40af!important;color:#fff;font-weight:700}'+
+      '.overall-row td{color:#fff;font-family:'+COU+'}'+
+      '.statsbox{background:#f0f8ff;border-left:4px solid #1e40af;padding:10px 14px;margin:14px 0;font-size:11px;line-height:1.9;font-weight:600}'+
+      '.footer{margin-top:14px;font-size:9px;color:#333;text-align:center;border-top:1px solid #ccc;padding-top:8px;font-weight:600}'+
+      '</style></head><body>'+
+      '<h1>'+title+'</h1>'+
+      (subtitle?'<div class="sub">'+subtitle+'</div>':'<br>')+
+      '<table><thead><tr>'+
+        '<th>Study</th><th>'+measure+'</th><th>95% Confidence Interval</th><th>Weight</th><th style="min-width:90px">'+xLabel+'</th>'+
+      '</tr></thead><tbody>'+rows+
+      '<tr class="overall-row">'+
+        '<td style="padding:6px 8px">Overall (pooled)</td>'+
+        '<td style="padding:6px 8px;text-align:center">'+fmt(r.pooledES,isProp,isLin)+'</td>'+
+        '<td style="padding:6px 8px;text-align:center">'+fmt(r.lo95,isProp,isLin)+' to '+fmt(r.hi95,isProp,isLin)+'</td>'+
+        '<td style="padding:6px 8px;text-align:right">—</td>'+
+        '<td style="padding:6px 8px"></td>'+
+      '</tr></tbody></table>'+
+      '<div class="statsbox">'+
+        '<b>Model:</b> '+(r.model==='random'?'Random Effects (DerSimonian-Laird)':'Fixed Effect')+' &nbsp;&nbsp; <b>k:</b> '+r.k+' studies<br>'+
+        '<b>Pooled '+measure+':</b> '+fmt(r.pooledES,isProp,isLin)+' ['+fmt(r.lo95,isProp,isLin)+'; '+fmt(r.hi95,isProp,isLin)+'] &nbsp;&nbsp; <b>Z:</b> '+r.z.toFixed(2)+' &nbsp;&nbsp; <b>p:</b> '+pStr(r.pZ)+'<br>'+
+        '<b>Heterogeneity:</b> Q='+r.Q.toFixed(2)+' (df='+r.df+'), p='+pStr(r.pQ)+', I\u00B2='+r.I2.toFixed(1)+'%, \u03C4\u00B2='+r.tau2.toFixed(4)+'<br>'+
+        '<b>Prediction interval:</b> ['+fmt(r.piLo,isProp,isLin)+'; '+fmt(r.piHi,isProp,isLin)+']'+
+      '</div>'+
+      '<div class="footer">Meta-Analysis Offline Tool &nbsp;&middot;&nbsp; Generated: '+new Date().toLocaleDateString()+'</div>'+
+      '<script>window.onload=function(){setTimeout(function(){window.print();},500);}<\/script>'+
+      '</body></html>';
+    const w2=window.open('','_blank');
+    if(w2){w2.document.write(html);w2.document.close();}else alert('Allow popups to export PDF.');
+
+  } else if(type==='funnel'){
+    const title=document.getElementById('funnelTitle').value||'Funnel Plot';
+    const canvas=document.getElementById('funnelCanvas');
+    const imgSrc=canvas.width?canvas.toDataURL('image/png',1.0):'';
+    const html='<!DOCTYPE html><html><head><title>'+title+'</title>'+
+      '<style>@page{size:A4 landscape;margin:12mm}body{font-family:'+CAL+';font-size:12px;color:#000;margin:0}'+
+      'h1{font-size:17px;font-weight:700;color:'+getTheme().titleColor+';margin-bottom:6px}'+
+      'img{max-width:100%;display:block;border:1px solid #ddd}'+
+      '.statsbox{background:#f0f8ff;border-left:4px solid #1e40af;padding:10px 14px;margin-top:12px;font-size:11px;font-weight:600;line-height:1.9}'+
+      '.footer{margin-top:12px;font-size:9px;color:#333;text-align:center;font-weight:600;border-top:1px solid #ccc;padding-top:8px}</style></head><body>'+
+      '<h1>'+title+'</h1>'+
+      (imgSrc?'<img src="'+imgSrc+'" alt="Funnel plot">':'<p><b>Generate funnel plot first.</b></p>')+
+      '<div class="statsbox"><b>k:</b> '+r.k+' studies &nbsp;&nbsp; <b>Model:</b> '+(r.model==='random'?'Random Effects':'Fixed Effect')+'<br>'+
+        '<b>Pooled '+measure+':</b> '+fmt(r.pooledES,isProp,isLin)+' ['+fmt(r.lo95,isProp,isLin)+'; '+fmt(r.hi95,isProp,isLin)+']<br>'+
+        '<b>Heterogeneity:</b> I\u00B2='+r.I2.toFixed(1)+'%, \u03C4\u00B2='+r.tau2.toFixed(4)+'</div>'+
+      '<div class="footer">Meta-Analysis Offline Tool &nbsp;&middot;&nbsp; '+new Date().toLocaleDateString()+'</div>'+
+      '<script>window.onload=function(){setTimeout(function(){window.print();},500);}<\/script></body></html>';
+    const w2=window.open('','_blank');
+    if(w2){w2.document.write(html);w2.document.close();}else alert('Allow popups to export PDF.');
+
+  } else if(type==='loo'){
+    exportLOOPDF();
+  } else if(type==='results'){
+    const tableRows=effects.map((e,i)=>{
+      const lo=e.logES-1.96*e.se,hi=e.logES+1.96*e.se;
+      const z=e.logES/e.se,p2=2*(1-jsnorm(Math.abs(z)));
+      return '<tr style="background:'+(i%2===0?'#f8faff':'#fff')+'">'+
+        '<td style="padding:5px 8px;font-weight:700">'+e.name+'</td>'+
+        '<td style="padding:5px 8px;text-align:center;font-family:'+COU+'">'+fmt(e.logES,isProp,isLin)+'</td>'+
+        '<td style="padding:5px 8px;text-align:center;font-family:'+COU+'">'+fmt(lo,isProp,isLin)+'</td>'+
+        '<td style="padding:5px 8px;text-align:center;font-family:'+COU+'">'+fmt(hi,isProp,isLin)+'</td>'+
+        '<td style="padding:5px 8px;text-align:center;font-family:'+COU+'">'+e.logES.toFixed(dp())+'</td>'+
+        '<td style="padding:5px 8px;text-align:center;font-family:'+COU+'">'+e.se.toFixed(dp())+'</td>'+
+        '<td style="padding:5px 8px;text-align:right;font-family:'+COU+'">'+(wArr[i]/wTot*100).toFixed(1)+'%</td>'+
+        '<td style="padding:5px 8px;text-align:center;font-family:'+COU+'">'+z.toFixed(2)+'</td>'+
+        '<td style="padding:5px 8px;text-align:center;font-family:'+COU+';color:'+(p2<0.05?'#145a2e':'#000')+';font-weight:'+(p2<0.05?'700':'600')+'">'+pStr(p2)+'</td>'+
+        '</tr>';
+    }).join('');
+    const sigText=r.pZ<0.05?'<b style="color:#145a2e">SIGNIFICANT</b>':'NOT SIGNIFICANT';
+    const hetText=r.I2>75?'Considerable (I\u00B2>75%)':r.I2>50?'Substantial':'Low/Moderate';
+    const rTitle=document.getElementById('resultsTitle').value||'Meta-Analysis Results';
+    const html='<!DOCTYPE html><html><head><title>'+rTitle+'</title>'+
+      '<style>@page{size:A4;margin:10mm}body{font-family:'+CAL+';font-size:11px;color:#000;margin:0}'+
+      'h1{font-size:18px;font-weight:700;color:#1e40af;margin:0 0 3px}'+
+      '.meta{font-size:10px;font-weight:600;color:#333;margin-bottom:12px}'+
+      'table{width:100%;border-collapse:collapse}'+
+      'th{background:#dbeafe;padding:6px 8px;text-align:center;font-family:'+COU+';font-size:9.5px;font-weight:700;border-bottom:2px solid #93c5fd}'+
+      'th:first-child{text-align:left}'+
+      'td{border-bottom:1px solid #e2e8f0}'+
+      '.sumbox{background:#eff6ff;border-left:4px solid #1e40af;border-radius:4px;padding:10px 14px;margin:10px 0;line-height:1.9;font-size:11px;font-weight:600}'+
+      '.sumbox b{color:#1e40af;font-family:'+COU+';font-size:10px}'+
+      '.overall{background:#1e40af!important;color:#fff;font-weight:700}'+
+      '.overall td{color:#fff;font-family:'+COU+'}'+
+      '.footer{margin-top:12px;font-size:9px;color:#333;text-align:center;border-top:1px solid #ccc;padding-top:8px;font-weight:600}'+
+      '</style></head><body>'+
+      '<h1>'+rTitle+'</h1>'+
+      '<div class="meta">Generated: '+new Date().toLocaleDateString()+' &nbsp;&middot;&nbsp; k='+r.k+' &nbsp;&middot;&nbsp; '+(r.model==='random'?'Random Effects':'Fixed Effect')+'</div>'+
+      '<div class="sumbox">'+
+        '<b>POOLED '+measure.toUpperCase()+':</b> '+fmt(r.pooledES,isProp,isLin)+' ['+fmt(r.lo95,isProp,isLin)+'; '+fmt(r.hi95,isProp,isLin)+']<br>'+
+        '<b>OVERALL EFFECT:</b> Z='+r.z.toFixed(2)+', p='+pStr(r.pZ)+' \u2192 '+sigText+'<br>'+
+        '<b>HETEROGENEITY:</b> Q='+r.Q.toFixed(2)+' (df='+r.df+'), p='+pStr(r.pQ)+', I\u00B2='+r.I2.toFixed(1)+'% ('+hetText+'), \u03C4\u00B2='+r.tau2.toFixed(4)+'<br>'+
+        '<b>PREDICTION INTERVAL:</b> ['+fmt(r.piLo,isProp,isLin)+'; '+fmt(r.piHi,isProp,isLin)+']'+
+      '</div>'+
+      '<table><thead><tr><th style="text-align:left">Study</th><th>'+measure+'</th><th>CI Lo</th><th>CI Hi</th><th>log(ES)</th><th>SE</th><th>Weight%</th><th>Z</th><th>p-value</th></tr></thead>'+
+      '<tbody>'+tableRows+
+      '<tr class="overall"><td style="padding:6px 8px">Overall</td>'+
+        '<td style="padding:6px 8px;text-align:center">'+fmt(r.pooledES,isProp,isLin)+'</td>'+
+        '<td style="padding:6px 8px;text-align:center">'+fmt(r.lo95,isProp,isLin)+'</td>'+
+        '<td style="padding:6px 8px;text-align:center">'+fmt(r.hi95,isProp,isLin)+'</td>'+
+        '<td colspan="3" style="padding:6px 8px;text-align:center">—</td>'+
+        '<td style="padding:6px 8px;text-align:center">'+r.z.toFixed(2)+'</td>'+
+        '<td style="padding:6px 8px;text-align:center">'+pStr(r.pZ)+'</td>'+
+      '</tr></tbody></table>'+
+      '<div class="footer">Meta-Analysis Offline Tool &nbsp;&middot;&nbsp; All calculations local &nbsp;&middot;&nbsp; No data transmitted</div>'+
+      '<script>window.onload=function(){setTimeout(function(){window.print();},500);}<\/script></body></html>';
+    const w2=window.open('','_blank');
+    if(w2){w2.document.write(html);w2.document.close();}else alert('Allow popups to export PDF.');
+  }
+}
+
+// ================================================================
+//  TITLE → SAFE FILENAME HELPER
+// ================================================================
+function titleToFilename(inputId, fallback){
+  const raw=(document.getElementById(inputId)||{}).value||fallback;
+  // Trim, lowercase, replace spaces/special chars with underscores, strip unsafe chars
+  return raw.trim()
+    .replace(/[^a-zA-Z0-9\s\-_]/g,'')   // remove non-alphanumeric except space/dash/underscore
+    .replace(/\s+/g,'_')                 // spaces → underscores
+    .replace(/_+/g,'_')                  // collapse multiple underscores
+    .replace(/^_|_$/g,'')               // trim leading/trailing underscores
+    .toLowerCase()
+    ||fallback;
+}
+
+// ================================================================
+//  PNG DOWNLOAD — highest quality, filename from title
+// ================================================================
+function downloadPNG(id,filename){
+  const canvas=document.getElementById(id);
+  if(!canvas.width){alert('Generate the plot first.');return;}
+  const a=document.createElement('a');
+  a.href=canvas.toDataURL('image/png',1.0);
+  a.download=filename;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+}
+
+// ================================================================
+//  LOO PDF EXPORT
+// ================================================================
+function exportLOOPDF(){
+  if(!lastResult){alert('Run Leave-One-Out analysis first.');return;}
+  const{effects,result:r}=lastResult;
+  const isProp=!!effects[0].prop,isLin=!!(effects[0].isLinear||isProp);
+  const measure=getMeasureLabel(effects[0]);
+  const title=document.getElementById('looTitle').value||'Leave-One-Out Sensitivity Analysis';
+  const CAL='Calibri,Carlito,Arial,sans-serif';
+  const COU='Calibri,Carlito,Arial,sans-serif';
+
+  // Get LOO table rows from the DOM
+  const looTbl=document.getElementById('looTable');
+  const looRows=looTbl?looTbl.querySelector('tbody'):'';
+  const tableHTML=looTbl?looTbl.outerHTML:'<p>No LOO results found. Run Leave-One-Out first.</p>';
+
+  // Canvas image
+  const canvas=document.getElementById('looCanvas');
+  const imgSrc=canvas&&canvas.width?canvas.toDataURL('image/png',1.0):'';
+
+  const html='<!DOCTYPE html><html><head><title>'+title+'</title>'+
+    '<style>@page{size:A4 landscape;margin:12mm}'+
+    'body{font-family:'+CAL+';font-size:11px;color:#000;margin:0;-webkit-print-color-adjust:exact;print-color-adjust:exact}'+
+    'h1{font-size:17px;font-weight:700;color:#1e40af;margin:0 0 6px}'+
+    '.meta{font-size:10px;font-weight:600;color:#333;margin-bottom:10px}'+
+    'img{max-width:100%;display:block;border:1px solid #ddd;margin-bottom:12px}'+
+    'table{width:100%;border-collapse:collapse;font-size:10px}'+
+    'th{background:#dbeafe;padding:6px 8px;text-align:left;font-weight:700;border-bottom:2px solid #93c5fd}'+
+    'td{padding:5px 8px;border-bottom:1px solid #e2e8f0;font-weight:600}'+
+    'tr:nth-child(even) td{background:#f8faff}'+
+    '.sumbox{background:#eff6ff;border-left:4px solid #1e40af;padding:10px 14px;margin-bottom:10px;font-size:11px;font-weight:600;line-height:1.9}'+
+    '.footer{margin-top:12px;font-size:9px;color:#333;text-align:center;border-top:1px solid #ccc;padding-top:8px;font-weight:600}'+
+    '</style></head><body>'+
+    '<h1>'+title+'</h1>'+
+    '<div class="meta">Generated: '+new Date().toLocaleDateString()+' &nbsp;&middot;&nbsp; k='+r.k+' studies &nbsp;&middot;&nbsp; '+(r.model==='random'?'Random Effects':'Fixed Effect')+' model</div>'+
+    '<div class="sumbox">'+
+      '<b>Overall pooled '+measure+':</b> '+fmt(r.pooledES,isProp,isLin)+' ['+fmt(r.lo95,isProp,isLin)+'; '+fmt(r.hi95,isProp,isLin)+']&nbsp;&nbsp;'+
+      '<b>Z:</b> '+r.z.toFixed(2)+'&nbsp;&nbsp;<b>p:</b> '+pStr(r.pZ)+'<br>'+
+      '<b>Heterogeneity:</b> I\u00B2='+r.I2.toFixed(1)+'%, \u03C4\u00B2='+r.tau2.toFixed(4)+'&nbsp;&nbsp;'+
+      '<b>Interpretation:</b> Each row shows the pooled estimate when that study is omitted.'+
+    '</div>'+
+    (imgSrc?'<img src="'+imgSrc+'" alt="LOO plot">':'')+
+    tableHTML+
+    '<div class="footer">Meta-Analysis Offline Tool &nbsp;&middot;&nbsp; Leave-One-Out Sensitivity Analysis &nbsp;&middot;&nbsp; All calculations performed locally</div>'+
+    '<script>window.onload=function(){setTimeout(function(){window.print();},500);}<\/script>'+
+    '</body></html>';
+  const w2=window.open('','_blank');
+  if(w2){w2.document.write(html);w2.document.close();}else alert('Allow popups to export PDF.');
+}
+
+// ================================================================
+//  TAB SWITCHING
+// ================================================================
+function switchTab(name){
+  const allTabs=['forest','funnel','results','loo','subgroup','trimfill'];
+  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',allTabs[i]===name));
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+  const panel=document.getElementById('tab-'+name);
+  if(panel) panel.classList.add('active');
+  if(lastResult&&name==='forest')setTimeout(()=>drawForestPlot(document.getElementById('forestCanvas'),lastResult.effects,lastResult.result),40);
+  if(lastResult&&name==='funnel')setTimeout(()=>drawFunnelPlot(document.getElementById('funnelCanvas'),lastResult.effects,lastResult.result),40);
+}
+
+// ================================================================
+//  TRIM-AND-FILL (Duval & Tweedie L0 estimator)
+// ================================================================
+function trimFillCompute(effects){
+  // Iteratively trims most extreme right-side studies until symmetry,
+  // then mirrors them on the left to produce imputed effects.
+  var augmented=effects.slice();
+  var k0=0;
+  for(var iter=0;iter<50;iter++){
+    var r=metaAnalysis(augmented);
+    if(!r) break;
+    var center=r.pooledES;
+    var deviations=augmented.map(function(e,i){return{e:e,i:i,d:e.logES-center};});
+    var nRight=deviations.filter(function(d){return d.d>0;}).length;
+    var nLeft=deviations.filter(function(d){return d.d<0;}).length;
+    var k0new=Math.max(0,nRight-nLeft);
+    if(k0new===k0) break;
+    k0=k0new;
+    deviations.sort(function(a,b){return b.d-a.d;});
+    var toRemove=new Set(deviations.slice(0,k0).map(function(d){return d.i;}));
+    augmented=effects.filter(function(_,i){return !toRemove.has(i);});
+  }
+  var rTrimmed=metaAnalysis(augmented);
+  if(!rTrimmed) return{k0:0,adjustedResult:metaAnalysis(effects),imputedEffects:[],allEffects:effects};
+  var center=rTrimmed.pooledES;
+  var deviations2=effects.map(function(e,i){return{e:e,i:i,d:e.logES-center};});
+  deviations2.sort(function(a,b){return b.d-a.d;});
+  var imputedEffects=deviations2.slice(0,k0).map(function(d){
+    return{
+      name:'[Imputed] '+d.e.name,
+      logES:center-(d.e.logES-center),
+      se:d.e.se,
+      isLinear:d.e.isLinear,
+      prop:d.e.prop,
+      imputed:true
+    };
+  });
+  var allEffects=effects.concat(imputedEffects);
+  var adjustedResult=metaAnalysis(allEffects);
+  return{k0:k0,adjustedResult:adjustedResult,imputedEffects:imputedEffects,allEffects:allEffects,trimmedResult:rTrimmed};
+}
+
+function runTrimFill(){
+  hideErr();
+  var raw=getStudyData();
+  if(raw.length<3){showErr('Need at least 3 studies for trim-and-fill.');return;}
+  var effects=raw.map(computeLogEffect).filter(function(e){return e!==null;});
+  if(effects.length<3){showErr('Not enough valid studies.');return;}
+  var result=metaAnalysis(effects);
+  if(!result)return;
+  if(!lastResult) lastResult={effects:effects,result:result};
+  var isProp=!!effects[0].prop,isLin=!!(effects[0].isLinear||isProp);
+  var measure=getMeasureLabel(effects[0]);
+  var tf=trimFillCompute(effects);
+
+  document.getElementById('resultsArea').style.display='block';
+  switchTab('trimfill');
+
+  // Summary box
+  var sb=document.getElementById('trimfillSummary');
+  sb.style.display='block';
+  var origES=fmt(result.pooledES,isProp,isLin);
+  var adjES=tf.adjustedResult?fmt(tf.adjustedResult.pooledES,isProp,isLin):'N/A';
+  var adjLo=tf.adjustedResult?fmt(tf.adjustedResult.lo95,isProp,isLin):'N/A';
+  var adjHi=tf.adjustedResult?fmt(tf.adjustedResult.hi95,isProp,isLin):'N/A';
+  var adjP=tf.adjustedResult?pStr(tf.adjustedResult.pZ):'N/A';
+  sb.innerHTML=
+    '<strong>Trim-and-Fill Analysis</strong> (Duval &amp; Tweedie, L\u2080 estimator)<br>'+
+    '<strong>Studies imputed:</strong> '+tf.k0+
+    ' &nbsp;&middot;&nbsp; <strong>Original pooled '+measure+':</strong> '+origES+
+    ' &nbsp;&middot;&nbsp; <strong>Adjusted pooled:</strong> '+adjES+' ['+adjLo+'; '+adjHi+']'+
+    ' &nbsp;&middot;&nbsp; <strong>Adjusted p:</strong> '+adjP+'<br>'+
+    (tf.k0===0
+      ? '<b style="color:var(--green)">No studies imputed.</b> The funnel plot appears symmetric — no evidence of asymmetry by trim-and-fill.'
+      : '<b style="color:var(--warn)">'+tf.k0+' stud'+(tf.k0>1?'ies':'y')+' imputed</b> on the left side to restore funnel symmetry. The adjusted estimate accounts for potential publication bias.');
+
+  // Build table: original + imputed studies
+  var tbl=document.getElementById('trimfillTable');
+  tbl.innerHTML='<thead><tr><th>Study</th><th>Type</th><th>'+measure+'</th><th>95% CI Lo</th><th>95% CI Hi</th><th>SE</th></tr></thead>';
+  var tb=document.createElement('tbody');
+  effects.forEach(function(e){
+    var lo=e.logES-1.96*e.se,hi=e.logES+1.96*e.se;
+    var tr=document.createElement('tr');
+    tr.innerHTML='<td>'+e.name+'</td><td><span style="background:#dbeafe;padding:2px 7px;border-radius:4px;font-size:11px;font-weight:700;color:#1e40af">Observed</span></td>'+
+      '<td class="mono">'+fmt(e.logES,isProp,isLin)+'</td>'+
+      '<td class="mono">'+fmt(lo,isProp,isLin)+'</td>'+
+      '<td class="mono">'+fmt(hi,isProp,isLin)+'</td>'+
+      '<td class="mono">'+e.se.toFixed(dp())+'</td>';
+    tb.appendChild(tr);
+  });
+  tf.imputedEffects.forEach(function(e){
+    var lo=e.logES-1.96*e.se,hi=e.logES+1.96*e.se;
+    var tr=document.createElement('tr');
+    tr.style.background='#fff8f0';
+    tr.innerHTML='<td>'+e.name+'</td><td><span style="background:#fee2e2;padding:2px 7px;border-radius:4px;font-size:11px;font-weight:700;color:#b91c1c">Imputed</span></td>'+
+      '<td class="mono">'+fmt(e.logES,isProp,isLin)+'</td>'+
+      '<td class="mono">'+fmt(lo,isProp,isLin)+'</td>'+
+      '<td class="mono">'+fmt(hi,isProp,isLin)+'</td>'+
+      '<td class="mono">'+e.se.toFixed(dp())+'</td>';
+    tb.appendChild(tr);
+  });
+  // Overall rows
+  function overallRow(label,r,color){
+    if(!r)return;
+    var tr=document.createElement('tr');
+    tr.style.background=color;
+    tr.innerHTML='<td colspan="2"><b>'+label+'</b></td>'+
+      '<td class="mono"><b>'+fmt(r.pooledES,isProp,isLin)+'</b></td>'+
+      '<td class="mono"><b>'+fmt(r.lo95,isProp,isLin)+'</b></td>'+
+      '<td class="mono"><b>'+fmt(r.hi95,isProp,isLin)+'</b></td>'+
+      '<td class="mono">—</td>';
+    tb.appendChild(tr);
+  }
+  overallRow('Original pooled estimate',result,'#f0fdf4');
+  overallRow('Adjusted pooled estimate (trim-and-fill)',tf.adjustedResult,'#dbeafe');
+  tbl.appendChild(tb);
+
+  // Draw the funnel plot with imputed studies
+  setTimeout(function(){drawTrimFillCanvas(document.getElementById('trimfillCanvas'),effects,tf,result,isProp,isLin);},60);
+}
+
+function drawTrimFillCanvas(canvas,origEffects,tf,origResult,isProp,isLin){
+  var T=getTheme();
+  var allEffects=tf.allEffects||origEffects;
+  var adjResult=tf.adjustedResult||origResult;
+  var W_CSS=Math.min(700,(canvas.parentElement.clientWidth||680)-20);
+  var H_CSS=Math.round(W_CSS*0.72);
+  var ctx=setupCanvas(canvas,W_CSS,H_CSS);
+  ctx.fillStyle='#fff'; ctx.fillRect(0,0,W_CSS,H_CSS);
+
+  // Title bar
+  ctx.fillStyle=T.bgBar; ctx.fillRect(0,0,W_CSS,46);
+  ctx.strokeStyle=T.barBorder; ctx.lineWidth=1.5;
+  ctx.beginPath(); ctx.moveTo(0,46); ctx.lineTo(W_CSS,46); ctx.stroke();
+  ctx.fillStyle=T.titleColor; ctx.font=T.titleFont.replace(/\d+px/,'13px');
+  ctx.textAlign='left';
+  ctx.fillText('Trim-and-Fill Funnel Plot  ('+tf.k0+' stud'+(tf.k0!==1?'ies':'y')+' imputed)',16,28);
+
+  var pL=70,pR=26,pT=64,pB=60;
+  var pW=W_CSS-pL-pR,pH=H_CSS-pT-pB;
+
+  // Axis range — use adjusted pooled as funnel center
+  var pooled=adjResult.pooledES;
+  var allLogs=allEffects.map(function(e){return e.logES;});
+  var spread=Math.max(pooled-Math.min.apply(null,allLogs),Math.max.apply(null,allLogs)-pooled)+0.35;
+  var xMin=pooled-spread,xMax=pooled+spread;
+  var seMax=Math.max.apply(null,allEffects.map(function(e){return e.se;}))*1.15;
+
+  function toX(v){return pL+(v-xMin)/(xMax-xMin)*pW;}
+  function toY(s){return pT+(s/seMax)*pH;}
+
+  // 95% funnel fill
+  ctx.fillStyle='rgba(30,64,175,0.06)';
+  ctx.beginPath(); ctx.moveTo(toX(pooled),toY(0));
+  for(var i=0;i<=200;i++){var s=seMax*i/200;ctx.lineTo(toX(pooled+1.96*s),toY(s));}
+  for(var i=200;i>=0;i--){var s=seMax*i/200;ctx.lineTo(toX(pooled-1.96*s),toY(s));}
+  ctx.closePath(); ctx.fill();
+
+  // 95% dashed funnel lines
+  ctx.strokeStyle='rgba(88,130,220,0.45)'; ctx.lineWidth=1.5; ctx.setLineDash([5,3]);
+  for(var side of[1,-1]){
+    ctx.beginPath();
+    for(var i=0;i<=200;i++){var s=seMax*i/200;var x2=pooled+side*1.96*s;if(i===0)ctx.moveTo(toX(x2),toY(s));else ctx.lineTo(toX(x2),toY(s));}
+    ctx.stroke();
+  }
+  ctx.setLineDash([]);
+
+  // Original pooled centre line (grey dashed)
+  ctx.strokeStyle='rgba(100,100,100,0.35)'; ctx.setLineDash([4,3]); ctx.lineWidth=1.2;
+  ctx.beginPath(); ctx.moveTo(toX(origResult.pooledES),toY(0)); ctx.lineTo(toX(origResult.pooledES),toY(seMax)); ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Adjusted centre line (solid)
+  ctx.strokeStyle=diColor; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.moveTo(toX(pooled),toY(0)); ctx.lineTo(toX(pooled),toY(seMax)); ctx.stroke();
+
+  // Plot original studies (filled circles)
+  origEffects.forEach(function(e){
+    var x2=toX(e.logES),y2=toY(e.se);
+    var grd=ctx.createRadialGradient(x2-1,y2-1,0,x2,y2,7);
+    grd.addColorStop(0,hexRgba(sqColor,0.9)); grd.addColorStop(1,hexRgba(sqColor,0.65));
+    ctx.fillStyle=grd; ctx.strokeStyle=adjCol(sqColor,-30); ctx.lineWidth=0.8;
+    ctx.beginPath(); ctx.arc(x2,y2,6,0,Math.PI*2); ctx.fill(); ctx.stroke();
+  });
+
+  // Plot imputed studies (hollow circles with ×)
+  tf.imputedEffects.forEach(function(e){
+    var x2=toX(e.logES),y2=toY(e.se);
+    ctx.fillStyle='#fff'; ctx.strokeStyle='#b91c1c'; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.arc(x2,y2,7,0,Math.PI*2); ctx.fill(); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x2-4,y2); ctx.lineTo(x2+4,y2);
+    ctx.moveTo(x2,y2-4); ctx.lineTo(x2,y2+4); ctx.stroke();
+  });
+
+  // Axes
+  ctx.strokeStyle='#000'; ctx.lineWidth=1.5;
+  ctx.beginPath(); ctx.moveTo(pL,pT); ctx.lineTo(pL,pT+pH); ctx.lineTo(pL+pW,pT+pH); ctx.stroke();
+
+  // Y ticks
+  for(var i=0;i<=4;i++){
+    var s=seMax*i/4,y2=toY(s);
+    ctx.strokeStyle='#555'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(pL-4,y2); ctx.lineTo(pL,y2); ctx.stroke();
+    ctx.fillStyle='#000'; ctx.font='700 10px '+CF; ctx.textAlign='right';
+    ctx.fillText(s.toFixed(2),pL-7,y2+4);
+  }
+  // X ticks
+  for(var i=0;i<=6;i++){
+    var v=xMin+i*(xMax-xMin)/6,x2=toX(v);
+    var lab=isLin?v.toFixed(2):isProp?(Math.exp(v)/(1+Math.exp(v))*100).toFixed(1)+'%':Math.exp(v).toFixed(2);
+    ctx.strokeStyle='#555'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(x2,pT+pH); ctx.lineTo(x2,pT+pH+4); ctx.stroke();
+    ctx.fillStyle='#000'; ctx.font='700 10px '+CF; ctx.textAlign='center';
+    ctx.fillText(lab,x2,pT+pH+16);
+  }
+  // Axis labels
+  ctx.save(); ctx.translate(14,pT+pH/2); ctx.rotate(-Math.PI/2);
+  ctx.fillStyle='#000'; ctx.font='700 11px '+CF; ctx.textAlign='center';
+  ctx.fillText('Standard Error (SE)',0,0); ctx.restore();
+  var xLbl=document.getElementById('xAxisLabel').value||(isLin?'Effect Size':isProp?'Proportion':('log('+document.getElementById('measureSelect').value+')'));
+  ctx.fillStyle='#000'; ctx.font='700 11px '+CF; ctx.textAlign='center';
+  ctx.fillText(xLbl,pL+pW/2,pT+pH+32); ctx.textAlign='left';
+
+  // Legend row at the bottom
+  var ly=H_CSS-18;
+  ctx.fillStyle=hexRgba(sqColor,0.85);
+  ctx.beginPath(); ctx.arc(pL+8,ly,6,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='#000'; ctx.font='700 10px '+CF;
+  ctx.fillText('Observed studies',pL+18,ly+4);
+
+  ctx.fillStyle='#fff'; ctx.strokeStyle='#b91c1c'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.arc(pL+145,ly,7,0,Math.PI*2); ctx.fill(); ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(pL+141,ly); ctx.lineTo(pL+149,ly);
+  ctx.moveTo(pL+145,ly-4); ctx.lineTo(pL+145,ly+4); ctx.stroke();
+  ctx.fillStyle='#000'; ctx.font='700 10px '+CF;
+  ctx.fillText('Imputed studies',pL+157,ly+4);
+
+  ctx.strokeStyle=diColor; ctx.lineWidth=2; ctx.setLineDash([]);
+  ctx.beginPath(); ctx.moveTo(pL+290,ly-5); ctx.lineTo(pL+308,ly-5); ctx.stroke();
+  ctx.fillStyle='#000'; ctx.fillText('Adjusted estimate',pL+313,ly+4);
+
+  ctx.strokeStyle='rgba(100,100,100,0.5)'; ctx.setLineDash([4,3]); ctx.lineWidth=1.2;
+  ctx.beginPath(); ctx.moveTo(pL+445,ly-5); ctx.lineTo(pL+463,ly-5); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle='#000'; ctx.fillText('Original estimate',pL+468,ly+4);
+}
+
+// Add trimfill to exportPDF
+var _origExportPDF=exportPDF;
+function exportPDF(type){
+  if(type==='trimfill'){
+    if(!lastResult){alert('Run trim-and-fill first.');return;}
+    var canvas=document.getElementById('trimfillCanvas');
+    var imgSrc=canvas&&canvas.width?canvas.toDataURL('image/png',1.0):'';
+    var title=(document.getElementById('funnelTitle').value||'Funnel Plot')+' — Trim-and-Fill';
+    var r=lastResult.result;
+    var isProp=!!lastResult.effects[0].prop,isLin=!!(lastResult.effects[0].isLinear||isProp);
+    var measure=getMeasureLabel(lastResult.effects[0]);
+    var CAL='Calibri,Carlito,Arial,sans-serif';
+    var html='<!DOCTYPE html><html><head><title>'+title+'</title>'+
+      '<style>@page{size:A4 landscape;margin:12mm}body{font-family:'+CAL+';font-size:12px;color:#000;margin:0}'+
+      'h1{font-size:16px;font-weight:700;color:#1e40af;margin-bottom:8px}'+
+      'img{max-width:100%;display:block;border:1px solid #ddd;margin-bottom:12px}'+
+      '.box{background:#eff6ff;border-left:4px solid #1e40af;padding:10px 14px;font-size:11px;font-weight:600;line-height:1.9}'+
+      '.footer{margin-top:12px;font-size:9px;color:#333;text-align:center;border-top:1px solid #ccc;padding-top:8px}'+
+      '</style></head><body>'+
+      '<h1>'+title+'</h1>'+
+      (imgSrc?'<img src="'+imgSrc+'" alt="Trim-and-fill plot">':'<p>Generate trim-and-fill first.</p>')+
+      '<div class="box">'+
+        '<b>Original pooled '+measure+':</b> '+fmt(r.pooledES,isProp,isLin)+' ['+fmt(r.lo95,isProp,isLin)+'; '+fmt(r.hi95,isProp,isLin)+'] &nbsp;&nbsp; p='+pStr(r.pZ)+'<br>'+
+        '<b>Heterogeneity:</b> I\u00B2='+r.I2.toFixed(1)+'%, \u03C4\u00B2='+r.tau2.toFixed(4)+
+      '</div>'+
+      '<div class="footer">Meta-Analysis Offline Tool &middot; Trim-and-Fill &middot; '+new Date().toLocaleDateString()+'</div>'+
+      '<script>window.onload=function(){setTimeout(function(){window.print();},500);}<\/script>'+
+      '</body></html>';
+    var w2=window.open('','_blank');
+    if(w2){w2.document.write(html);w2.document.close();}else alert('Allow popups to export PDF.');
+    return;
+  }
+  _origExportPDF(type);
+}
+
+// ================================================================
+//  SAVE / LOAD SESSION
+// ================================================================
+function saveSession(){
+  var session={
+    version:'6.0',
+    timestamp:new Date().toISOString(),
+    dataType:dataType,
+    inputIsLog:inputIsLog,
+    layoutName:layoutName,
+    sqColor:sqColor,
+    diColor:diColor,
+    sqSizeScale:sqSizeScale,
+    studies:studies.map(function(s){return s?s.slice():null;}),
+    rowIsSubgroup:rowIsSubgroup.slice(),
+    colHeaders:colHeaders.slice(),
+    settings:{
+      model:document.getElementById('modelSelect').value,
+      method:document.getElementById('methodSelect').value,
+      measure:document.getElementById('measureSelect').value,
+      knapp:document.getElementById('chkKnapp').checked,
+      contCorr:document.getElementById('chkContCorr').checked,
+      dp3:document.getElementById('chk3dp').checked,
+      predInt:document.getElementById('chkPredInt').checked,
+      hetero:document.getElementById('chkHetero').checked,
+      overall:document.getElementById('chkOverall').checked,
+      subgroup:document.getElementById('chkSubgroup').checked
+    },
+    titles:{
+      forest:document.getElementById('forestTitle').value,
+      funnel:document.getElementById('funnelTitle').value,
+      loo:document.getElementById('looTitle').value,
+      results:document.getElementById('resultsTitle').value,
+      subtitle:document.getElementById('forestSubtitle').value,
+      xaxis:document.getElementById('xAxisLabel').value
+    }
+  };
+  var blob=new Blob([JSON.stringify(session,null,2)],{type:'application/json'});
+  var a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  var dateStr=new Date().toISOString().slice(0,10);
+  a.download='meta_session_'+dateStr+'.json';
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(a.href);
+}
+
+function loadSession(input){
+  var file=input.files[0];
+  if(!file) return;
+  var rd=new FileReader();
+  rd.onload=function(e){
+    try{
+      var s=JSON.parse(e.target.result);
+      if(!s.version||!s.dataType){alert('Invalid session file.');return;}
+
+      // Restore state variables
+      dataType=s.dataType||'hr';
+      inputIsLog=!!s.inputIsLog;
+      layoutName=s.layoutName||'revman';
+      sqColor=s.sqColor||'#1e40af';
+      diColor=s.diColor||'#166534';
+      sqSizeScale=s.sqSizeScale||52;
+      colHeaders=s.colHeaders||DEFAULT_COLS[dataType].slice();
+      studies=s.studies||[];
+      rowIsSubgroup=s.rowIsSubgroup||studies.map(function(){return false;});
+
+      // Restore settings
+      var set=s.settings||{};
+      if(set.model) document.getElementById('modelSelect').value=set.model;
+      if(set.method) document.getElementById('methodSelect').value=set.method;
+      if(set.measure) document.getElementById('measureSelect').value=set.measure;
+      document.getElementById('chkKnapp').checked=!!set.knapp;
+      document.getElementById('chkContCorr').checked=set.contCorr!==undefined?set.contCorr:true;
+      document.getElementById('chk3dp').checked=set.dp3!==undefined?set.dp3:true;
+      document.getElementById('chkPredInt').checked=set.predInt!==undefined?set.predInt:true;
+      document.getElementById('chkHetero').checked=set.hetero!==undefined?set.hetero:true;
+      document.getElementById('chkOverall').checked=set.overall!==undefined?set.overall:true;
+      document.getElementById('chkSubgroup').checked=!!set.subgroup;
+
+      // Restore titles
+      var ti=s.titles||{};
+      if(ti.forest) document.getElementById('forestTitle').value=ti.forest;
+      if(ti.funnel) document.getElementById('funnelTitle').value=ti.funnel;
+      if(ti.loo) document.getElementById('looTitle').value=ti.loo;
+      if(ti.results) document.getElementById('resultsTitle').value=ti.results;
+      if(ti.subtitle) document.getElementById('forestSubtitle').value=ti.subtitle;
+      if(ti.xaxis) document.getElementById('xAxisLabel').value=ti.xaxis;
+
+      // Restore colour swatches
+      document.getElementById('sqCustom').value=sqColor;
+      document.getElementById('diCustom').value=diColor;
+      document.getElementById('sqSizeScale').value=sqSizeScale;
+      document.getElementById('sqSizeVal').textContent=sqSizeScale;
+
+      // Restore active data-type button
+      document.querySelectorAll('.dtype-btn').forEach(function(b){
+        b.classList.toggle('active',b.dataset.type===dataType);
+      });
+      setLogMode(inputIsLog);
+      updateUI();
+
+      // Rebuild table from restored data
+      renderTableHeader();
+      document.getElementById('studyTbody').innerHTML='';
+      studies.forEach(function(row,idx){
+        if(!row) return;
+        var isSG=rowIsSubgroup[idx]||false;
+        var tr=document.createElement('tr');
+        tr.dataset.idx=idx;
+        if(isSG) tr.classList.add('sg-header-row');
+        for(var ci=0;ci<row.length;ci++){
+          var td=document.createElement('td');
+          if(isSG&&ci>0){td.style.background='#dbeafe';tr.appendChild(td);continue;}
+          var inp=document.createElement('input'); inp.type='text'; inp.value=row[ci]||'';
+          if(isSG&&ci===0){inp.style.fontWeight='700';inp.style.color='#1e40af';inp.placeholder='Subgroup name…';}
+          // closure to capture idx and ci
+          (function(idx2,ci2){
+            inp.oninput=function(ev){studies[idx2][ci2]=ev.target.value;};
+          })(idx,ci);
+          td.appendChild(inp); tr.appendChild(td);
+        }
+        var dtd=document.createElement('td');
+        var db=document.createElement('button'); db.className='del-btn'; db.textContent='×';
+        (function(idx2){
+          db.onclick=function(){studies[idx2]=null;rowIsSubgroup[idx2]=false;tr.remove();};
+        })(idx);
+        dtd.appendChild(db); tr.appendChild(dtd);
+        document.getElementById('studyTbody').appendChild(tr);
+      });
+
+      resetResults();
+      var validCount=studies.filter(function(s,i){return s&&!rowIsSubgroup[i]&&s[0]&&s[0].trim();}).length;
+      alert('Session loaded \u2713\n'+validCount+' studies restored. Click \u25B6 Forest Plot to regenerate plots.');
+    }catch(err){
+      alert('Error loading session: '+err.message);
+    }
+  };
+  rd.readAsText(file);
+  input.value='';
+}
+
+// ================================================================
+//  INIT
+// ================================================================
+colHeaders=[...DEFAULT_COLS[dataType]];
+buildTable(); updateUI();
+
+</script>
+</body>
+</html>
